@@ -17,7 +17,7 @@ config.line_height = 1.1
 config.harfbuzz_features = { 'calt=1', 'clig=1', 'liga=1' } -- ligaduras (=>, !=, ===)
 
 -- Transparencia y desenfoque nativo de macOS
-config.window_background_opacity = 0.90
+config.window_background_opacity = 0.60
 config.macos_window_background_blur = 30
 config.window_padding = {
   left = 14,
