@@ -2,6 +2,12 @@ local wezterm = require 'wezterm'
 local act = wezterm.action
 local config = wezterm.config_builder()
 
+-- Detectar si corre en Windows para entrar automáticamente a WSL2
+if wezterm.target_triple:find("windows") then
+  config.default_domain = 'WSL:Ubuntu'
+end
+
+
 ----------------------------------------------------
 -- 1. APARIENCIA Y FUENTE
 ----------------------------------------------------
