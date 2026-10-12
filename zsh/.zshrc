@@ -332,15 +332,28 @@ if command -v starship &>/dev/null; then
 fi
 
 # ==============================================================================
-# 6. PLUGINS DE LÍNEA DE COMANDOS (HOMEBREW)
+# 6. PLUGINS DE LÍNEA DE COMANDOS (MACOS / CACHYOS / ARCH / UBUNTU)
 # ==============================================================================
-if [ -f "$(brew --prefix 2>/dev/null)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
-  source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-fi
+for _plugin in \
+  "$(brew --prefix 2>/dev/null)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
+  "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh"; do
+  if [ -f "$_plugin" ]; then
+    source "$_plugin"
+    break
+  fi
+done
 
-if [ -f "$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-  source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-fi
+for _plugin in \
+  "$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
+  "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
+  if [ -f "$_plugin" ]; then
+    source "$_plugin"
+    break
+  fi
+done
+unset _plugin
 
 # ==============================================================================
 # 7. UTILIDADES MODERNAS (EZA, BAT)

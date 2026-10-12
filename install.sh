@@ -5,21 +5,59 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPOCK_MODEL="qwen2.5-coder:1.5b"
 SPOCK_CONFIG_DIR="$HOME/.config/spock"
 
+# ==============================================================================
+# DETECCIÓN AUTOMÁTICA DEL SISTEMA OPERATIVO
+# ==============================================================================
+DETECTED_CHOICE=""
+DETECTED_NAME=""
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  DETECTED_CHOICE="1"
+  DETECTED_NAME="macOS"
+elif [ -n "$WSL_DISTRO_NAME" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+  DETECTED_CHOICE="4"
+  DETECTED_NAME="Windows 11 - WSL2"
+elif [ -f /etc/os-release ]; then
+  # Arch / CachyOS / Ubuntu / Debian detection
+  . /etc/os-release
+  if [[ "$ID" == "cachyos" || "$ID" == "arch" || "$ID_LIKE" =~ "arch" || "$ID_LIKE" =~ "cachyos" ]]; then
+    DETECTED_CHOICE="2"
+    DETECTED_NAME="CachyOS / Arch Linux"
+  elif [[ "$ID" == "ubuntu" || "$ID" == "debian" || "$ID_LIKE" =~ "debian" ]]; then
+    DETECTED_CHOICE="3"
+    DETECTED_NAME="Linux (Ubuntu / Debian)"
+  fi
+fi
+
 echo "=========================================="
 echo "  🚀 Instalador de Dotfiles & Entorno"
 echo "  🖖 Incluye suite completa de Spock AI"
 echo "=========================================="
-echo "Selecciona el entorno en el que estás ejecutando:"
+if [ -n "$DETECTED_NAME" ]; then
+  echo "🔍 Sistema detectado: $DETECTED_NAME"
+fi
+echo "Selecciona el entorno en el que deseas instalar:"
 echo "  1) macOS"
-echo "  2) Linux (Ubuntu / Debian)"
-echo "  3) Windows 11 - WSL2 (Ubuntu / Debian)"
+echo "  2) CachyOS / Arch Linux"
+echo "  3) Linux (Ubuntu / Debian)"
+echo "  4) Windows 11 - WSL2"
 echo "=========================================="
-read -rp "Ingresa una opción [1-3]: " OS_CHOICE
+
+PROMPT_TEXT="Ingresa una opción [1-4]"
+if [ -n "$DETECTED_CHOICE" ]; then
+  PROMPT_TEXT="$PROMPT_TEXT (por defecto $DETECTED_CHOICE): "
+else
+  PROMPT_TEXT="$PROMPT_TEXT: "
+fi
+
+read -rp "$PROMPT_TEXT" OS_CHOICE
+OS_CHOICE="${OS_CHOICE:-$DETECTED_CHOICE}"
 
 case "$OS_CHOICE" in
   1) TARGET_OS="macos" ;;
-  2) TARGET_OS="linux" ;;
-  3) TARGET_OS="wsl2" ;;
+  2) TARGET_OS="cachyos" ;;
+  3) TARGET_OS="linux" ;;
+  4) TARGET_OS="wsl2" ;;
   *)
     echo "❌ Opción no válida. Cancelando instalación."
     exit 1
@@ -66,6 +104,60 @@ if [ "$TARGET_OS" = "macos" ]; then
 
   brew install --cask font-jetbrains-mono-nerd-font || true
 
+elif [ "$TARGET_OS" = "cachyos" ]; then
+  echo "📦 Configurando CachyOS / Arch Linux..."
+  
+  # Determinar gestor de paquetes (paru o pacman)
+  AUR_HELPER=""
+  if command -v paru &>/dev/null; then
+    AUR_HELPER="paru"
+  elif command -v yay &>/dev/null; then
+    AUR_HELPER="yay"
+  fi
+
+  echo "🔄 Sincronizando repositorios e instalando paquetes base..."
+  ARCH_PKGS=(
+    zsh
+    curl
+    git
+    fzf
+    bat
+    base-devel
+    wget
+    python
+    python-pip
+    starship
+    atuin
+    zoxide
+    eza
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    wezterm
+    github-cli
+    ttf-jetbrains-mono-nerd
+    wl-clipboard
+    xclip
+  )
+
+  sudo pacman -Sy --needed --noconfirm "${ARCH_PKGS[@]}" || {
+    echo "⚠️ Algunos paquetes fallaron en lote, instalando individualmente..."
+    for pkg in "${ARCH_PKGS[@]}"; do
+      sudo pacman -S --needed --noconfirm "$pkg" || echo "⚠️ Falló $pkg, continuando..."
+    done
+  }
+
+  # Ollama en CachyOS / Arch
+  if ! command -v ollama &>/dev/null; then
+    echo "🤖 Instalando Ollama..."
+    sudo pacman -S --needed --noconfirm ollama || {
+      if [ -n "$AUR_HELPER" ]; then
+        $AUR_HELPER -S --needed --noconfirm ollama || true
+      else
+        curl -fsSL https://ollama.com/install.sh | sh || true
+      fi
+    }
+  fi
+
 elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
   echo "📦 Actualizando apt e instalando herramientas base..."
   sudo apt update && sudo apt install -y \
@@ -79,7 +171,9 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
     gpg \
     python3 \
     python3-pip \
-    python3-venv
+    python3-venv \
+    wl-clipboard \
+    xclip || true
 
   ln -sf /usr/bin/batcat "$HOME/.local/bin/bat" || true
 
@@ -219,7 +313,7 @@ fi
 if [ "$TARGET_OS" = "macos" ]; then
   ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.wezterm.lua
   echo "  ✔ ~/.wezterm.lua -> $DOTFILES_DIR/wezterm/.wezterm.lua"
-elif [ "$TARGET_OS" = "linux" ]; then
+elif [ "$TARGET_OS" = "cachyos" ] || [ "$TARGET_OS" = "linux" ]; then
   mkdir -p ~/.config/wezterm
   ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.wezterm.lua
   ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.config/wezterm/wezterm.lua
