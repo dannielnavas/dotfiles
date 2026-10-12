@@ -6,3 +6,4 @@ __pycache__/
 __MACOSX/
 *.tape
 render_all.sh
+tapes/*.md
