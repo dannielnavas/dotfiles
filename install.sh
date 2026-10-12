@@ -2,9 +2,12 @@
 set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SPOCK_MODEL="qwen2.5-coder:1.5b"
+SPOCK_CONFIG_DIR="$HOME/.config/spock"
 
 echo "=========================================="
 echo "  🚀 Instalador de Dotfiles & Entorno"
+echo "  🖖 Incluye suite completa de Spock AI"
 echo "=========================================="
 echo "Selecciona el entorno en el que estás ejecutando:"
 echo "  1) macOS"
@@ -26,8 +29,10 @@ esac
 echo "➡️ Configurando para: $TARGET_OS..."
 
 # ==============================================================================
-# 1. INSTALACIÓN DE PAQUETES
+# 1. INSTALACIÓN DE PAQUETES Y HERRAMIENTAS
 # ==============================================================================
+mkdir -p "$HOME/.local/bin" "$HOME/.config"
+
 if [ "$TARGET_OS" = "macos" ]; then
   if ! xcode-select -p &>/dev/null; then
     echo "📦 Instalando Xcode Command Line Tools..."
@@ -50,6 +55,7 @@ if [ "$TARGET_OS" = "macos" ]; then
     starship \
     atuin \
     ollama \
+    python3 \
     zsh-autosuggestions \
     zsh-syntax-highlighting \
     zoxide \
@@ -70,10 +76,12 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
     bat \
     build-essential \
     wget \
-    gpg
+    gpg \
+    python3 \
+    python3-pip \
+    python3-venv
 
-  mkdir -p ~/.local/bin
-  ln -sf /usr/bin/batcat ~/.local/bin/bat || true
+  ln -sf /usr/bin/batcat "$HOME/.local/bin/bat" || true
 
   # Starship
   if ! command -v starship &>/dev/null; then
@@ -112,25 +120,118 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
 fi
 
 # ==============================================================================
-# 2. VINCULAR DOTFILES (SYMLINKS)
+# 2. CONFIGURACIÓN E INSTALACIÓN DEL SISTEMA SPOCK AI
 # ==============================================================================
-echo "🔗 Creando enlaces simbólicos..."
-rm -f ~/.zshrc ~/.wezterm.lua
+echo ""
+echo "=========================================="
+echo "  🖖 Configurando Sistema Spock AI"
+echo "=========================================="
 
+# Permisos ejecutables para el script de Spock
+chmod +x "$DOTFILES_DIR/zsh/spock.py"
+
+# Enlace directo en ~/.local/bin/spock para ejecución global
+ln -sf "$DOTFILES_DIR/zsh/spock.py" "$HOME/.local/bin/spock"
+echo "✅ Enlace ejecutable creado: $HOME/.local/bin/spock"
+
+# Configuración persistente e idioma de Spock
+mkdir -p "$SPOCK_CONFIG_DIR"
+CONFIG_FILE="$SPOCK_CONFIG_DIR/config.json"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo ""
+  echo "🌐 Selecciona el idioma predeterminado para Spock:"
+  echo "  1) Español (predeterminado)"
+  echo "  2) English"
+  read -rp "Opción [1-2] (Enter para Español): " SPOCK_LANG_CHOICE
+
+  if [ "$SPOCK_LANG_CHOICE" = "2" ]; then
+    echo '{"lang": "en"}' > "$CONFIG_FILE"
+    echo "✅ Spock configurado en idioma Inglés (~/.config/spock/config.json)."
+  else
+    echo '{"lang": "es"}' > "$CONFIG_FILE"
+    echo "✅ Spock configurado en idioma Español (~/.config/spock/config.json)."
+  fi
+else
+  echo "ℹ️ Configuración existente de Spock detectada en $CONFIG_FILE."
+fi
+
+# Iniciar o verificar el servicio Ollama
+echo "🔌 Verificando servicio de Ollama..."
+if ! curl -s http://localhost:11434/api/tags &>/dev/null; then
+  echo "⚡ Iniciando Ollama en segundo plano..."
+  if [ "$TARGET_OS" = "macos" ]; then
+    brew services start ollama 2>/dev/null || nohup ollama serve >/dev/null 2>&1 &
+  else
+    sudo systemctl enable --now ollama 2>/dev/null || nohup ollama serve >/dev/null 2>&1 &
+  fi
+
+  echo "⏳ Esperando respuesta del motor Ollama..."
+  OLLAMA_UP=0
+  for i in {1..20}; do
+    if curl -s http://localhost:11434/api/tags &>/dev/null; then
+      OLLAMA_UP=1
+      break
+    fi
+    sleep 1
+  done
+
+  if [ $OLLAMA_UP -eq 1 ]; then
+    echo "✅ Ollama está listo y respondiendo."
+  else
+    echo "⚠️ Ollama no respondió a tiempo. Puedes iniciarlo manualmente con 'ollama serve'."
+  fi
+else
+  echo "✅ Servicio Ollama ya se encuentra activo."
+fi
+
+# Descarga y verificación del modelo de IA para Spock
+if command -v ollama &>/dev/null; then
+  echo "🧠 Verificando modelo de IA de Spock ($SPOCK_MODEL)..."
+  if ollama list 2>/dev/null | grep -q "$SPOCK_MODEL"; then
+    echo "✅ Modelo $SPOCK_MODEL ya disponible en Ollama."
+  else
+    echo "📥 Descargando modelo $SPOCK_MODEL para Spock (esto puede tardar unos minutos según tu conexión)..."
+    ollama pull "$SPOCK_MODEL" || {
+      echo "⚠️ No se pudo completar la descarga automática. Ejecuta 'ollama pull $SPOCK_MODEL' cuando tengas conexión."
+    }
+  fi
+fi
+
+# ==============================================================================
+# 3. VINCULAR DOTFILES (SYMLINKS)
+# ==============================================================================
+echo ""
+echo "🔗 Creando enlaces simbólicos de Dotfiles..."
+rm -f ~/.zshrc ~/.wezterm.lua ~/.config/starship.toml
+
+# Zsh
 ln -sf "$DOTFILES_DIR/zsh/.zshrc" ~/.zshrc
+echo "  ✔ ~/.zshrc -> $DOTFILES_DIR/zsh/.zshrc"
 
-if [ "$TARGET_OS" != "wsl2" ]; then
+# Starship
+if [ -f "$DOTFILES_DIR/startship/starship.toml" ]; then
+  ln -sf "$DOTFILES_DIR/startship/starship.toml" ~/.config/starship.toml
+  echo "  ✔ ~/.config/starship.toml -> $DOTFILES_DIR/startship/starship.toml"
+fi
+
+# WezTerm
+if [ "$TARGET_OS" = "macos" ]; then
   ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.wezterm.lua
+  echo "  ✔ ~/.wezterm.lua -> $DOTFILES_DIR/wezterm/.wezterm.lua"
+elif [ "$TARGET_OS" = "linux" ]; then
+  mkdir -p ~/.config/wezterm
+  ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.wezterm.lua
+  ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.config/wezterm/wezterm.lua
+  echo "  ✔ ~/.wezterm.lua & ~/.config/wezterm/wezterm.lua -> $DOTFILES_DIR/wezterm/.wezterm.lua"
 else
   # AUTOMATIZACIÓN EN WINDOWS DESDE WSL2:
-  # Detecta el usuario activo de Windows a través del comando cmd.exe
-  WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+  WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d "\r")
   WIN_HOME="/mnt/c/Users/$WIN_USER"
   DISTRO="${WSL_DISTRO_NAME:-Ubuntu}"
 
   if [ -d "$WIN_HOME" ]; then
     echo "🪟 Configurando enlace automático para WezTerm en Windows ($WIN_HOME)..."
-    # Crea el archivo puente en C:\Users\<Usuario>\.wezterm.lua
     cat << EOF > "$WIN_HOME/.wezterm.lua"
 return dofile([[\\\\wsl.localhost\\$DISTRO\\home\\$USER\\dotfiles\\wezterm\\.wezterm.lua]])
 EOF
@@ -141,10 +242,24 @@ EOF
 fi
 
 # ==============================================================================
-# 3. FINALIZAR Y COMPILAR
+# 4. FINALIZAR Y COMPILAR
 # ==============================================================================
 if command -v zcompile &>/dev/null; then
   zcompile ~/.zshrc || true
 fi
 
-echo "🎉 ¡Instalación completa para $TARGET_OS! Ejecuta 'exec zsh' para comenzar."
+echo ""
+echo "============================================================"
+echo "  🎉 ¡Instalación completa para $TARGET_OS!"
+echo "  🖖 El sistema Spock está 100% operativo."
+echo "============================================================"
+echo "Comandos y funciones de Spock disponibles:"
+echo "  • spock                    -> Abre el canal de chat interactivo"
+echo "  • spock \"<consulta>\"       -> Sugiere comandos o resuelve dudas"
+echo "  • ask \"<consulta>\"         -> Sugiere comandos y permite ejecutarlos"
+echo "  • fix  (o Ctrl + G)        -> Diagnostica y corrige el último error"
+echo "  • spock explain <archivo>  -> Explica arquitectura y código"
+echo "  • spock debug <error>      -> Deduce causa raíz y anomalías"
+echo "  • spock lang [es|en]       -> Cambia el idioma en cualquier momento"
+echo "============================================================"
+echo "Ejecuta 'exec zsh' o reinicia tu terminal para comenzar."

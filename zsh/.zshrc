@@ -10,7 +10,13 @@ if [ -f "/opt/homebrew/bin/brew" ]; then
 fi
 
 # Antigravity IDE
-export PATH="/Users/dannielnavas/.antigravity-ide/antigravity-ide/bin:$PATH"
+# Binarios locales y herramientas
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+
+# Antigravity IDE
+if [ -d "/Users/dannielnavas/.antigravity-ide/antigravity-ide/bin" ]; then
+  export PATH="/Users/dannielnavas/.antigravity-ide/antigravity-ide/bin:$PATH"
+fi
 
 # ==============================================================================
 # 2. ALIASES GENERALES Y DE PRODUCTIVIDAD
@@ -43,7 +49,15 @@ export SPOCK_MODEL="qwen2.5-coder:1.5b"
 #   "hint" -> Muestra una barra sutil indicando presionar 'fix', 'spock' o Ctrl+G
 export SPOCK_AUTO_MODE="ask"
 
-__SPOCK_SCRIPT="$HOME/dotfiles/zsh/spock.py"
+if [ -z "$__SPOCK_SCRIPT" ]; then
+  if [ -f "$HOME/dotfiles/zsh/spock.py" ]; then
+    __SPOCK_SCRIPT="$HOME/dotfiles/zsh/spock.py"
+  elif [ -f "$HOME/.local/bin/spock" ]; then
+    __SPOCK_SCRIPT="$HOME/.local/bin/spock"
+  else
+    __SPOCK_SCRIPT="$(command -v spock 2>/dev/null || echo "$HOME/dotfiles/zsh/spock.py")"
+  fi
+fi
 
 # Obtiene el idioma activo (es / en) configurado en Spock
 __spock_get_lang() {
