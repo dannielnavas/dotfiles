@@ -1,0 +1,49 @@
+#compdef dilix
+
+_dilix() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  local -a subcommands
+  subcommands=(
+    'menu:Abre el menú interactivo con todas las opciones / Interactive options menu'
+    'chat:Canal de conversación interactivo con memoria / Interactive chat channel'
+    'ask:Consulta en lenguaje natural para obtener comandos / Natural language query'
+    'fix:Diagnostica y repara el comando fallido previo / Diagnose and fix previous command'
+    'explain:Explica arquitectura y lógica de código / Explain code and architecture'
+    'debug:Depura trazas de error y causa raíz / Debug error traces and root cause'
+    'lang:Ver o cambiar idioma activo (es/en) / View or switch active language'
+    'model:Ver modelo de IA y estado del servicio Ollama / View AI model and Ollama status'
+    'help:Muestra la lista de todas las opciones / Show all available options'
+  )
+
+  _arguments -C \
+    '1:subcomando:->subcmd' \
+    '*::argumentos:->args' && return 0
+
+  case "$state" in
+    subcmd)
+      _describe -t subcommands 'subcomandos de dilix' subcommands
+      ;;
+    args)
+      case "$line[1]" in
+        explain|debug)
+          _files
+          ;;
+        lang)
+          local -a langs
+          langs=(
+            'es:Español / Spanish'
+            'en:Inglés / English'
+          )
+          _describe -t langs 'idioma' langs
+          ;;
+        *)
+          _message 'consulta o argumento'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_dilix "$@"

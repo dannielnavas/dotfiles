@@ -39,272 +39,22 @@ alias gpl="git pull"
 alias gl="git log --oneline --graph --decorate -n 10"
 
 # ==============================================================================
-# 3. ASISTENTE LOCAL DE IA: SPOCK (OLLAMA)
+# 3. ASISTENTE LOCAL DE IA: DILIX (PLUGIN MODULAR ZSH)
 # ==============================================================================
-export SPOCK_MODEL="qwen2.5-coder:1.5b"
+export DILIX_MODEL="${DILIX_MODEL:-qwen2.5-coder:1.5b}"
+export DILIX_AUTO_MODE="${DILIX_AUTO_MODE:-ask}"
 
-# Modos de comportamiento cuando un comando da error:
-#   "ask"  -> Muestra aviso y pregunta si deseas que Spock analice el error [s/N] / [y/N]
-#   "auto" -> Analiza automáticamente con Spock cada vez que un comando falle
-#   "hint" -> Muestra una barra sutil indicando presionar 'fix', 'spock' o Ctrl+G
-export SPOCK_AUTO_MODE="ask"
-
-if [ -z "$__SPOCK_SCRIPT" ]; then
-  if [ -f "$HOME/dotfiles/zsh/spock.py" ]; then
-    __SPOCK_SCRIPT="$HOME/dotfiles/zsh/spock.py"
-  elif [ -f "$HOME/.local/bin/spock" ]; then
-    __SPOCK_SCRIPT="$HOME/.local/bin/spock"
-  else
-    __SPOCK_SCRIPT="$(command -v spock 2>/dev/null || echo "$HOME/dotfiles/zsh/spock.py")"
-  fi
+# Cargar plugin modular de Dilix (funciones, autocompletado _dilix, hooks y keybindings)
+DILIX_PLUGIN_PATH="$HOME/dotfiles/zsh/plugins/dilix"
+if [ -d "$DILIX_PLUGIN_PATH" ]; then
+  fpath=("$DILIX_PLUGIN_PATH" $fpath)
+  source "$DILIX_PLUGIN_PATH/dilix.plugin.zsh"
 fi
 
-# Obtiene el idioma activo (es / en) configurado en Spock
-__spock_get_lang() {
-  if [ -n "$SPOCK_LANG" ]; then
-    echo "$SPOCK_LANG"
-    return
-  fi
-  local cfg="$HOME/.config/spock/config.json"
-  if [ -f "$cfg" ]; then
-    local l=$(grep -o '"lang": *"[^"]*"' "$cfg" 2>/dev/null | cut -d'"' -f4)
-    if [ -n "$l" ]; then
-      echo "$l"
-      return
-    fi
-  fi
-  echo "es"
-}
+# Inicializar sistema de autocompletado de Zsh
+autoload -Uz compinit
+compinit -C 2>/dev/null || compinit
 
-# Ejecuta o inserta el comando según la acción elegida por el usuario
-__spock_run_action() {
-  local action_type="$1"
-  local cmd="$2"
-
-  case "$action_type" in
-    EXEC)
-      if [ -n "$cmd" ]; then
-        print -s "$cmd" # Agrega al historial de Zsh
-        echo -e "\033[1;32m▶ Running / Ejecutando:\033[0m $cmd"
-        eval "$cmd"
-      fi
-      ;;
-    MODIFY)
-      if [ -n "$cmd" ]; then
-        print -z "$cmd" # Carga el comando en el prompt para editarlo
-      fi
-      ;;
-    CANCEL|*)
-      ;;
-  esac
-}
-
-# Consulta en lenguaje natural para obtener comandos
-ask() {
-  if [ $# -eq 0 ]; then
-    local lang=$(__spock_get_lang)
-    if [[ "$lang" == "en" ]]; then
-      echo -e "\033[1;33mUsage:\033[0m ask \"your natural language query\""
-      echo -e "Example: ask \"how to list listening ports\""
-    else
-      echo -e "\033[1;33mUso:\033[0m ask \"tu consulta aquí\""
-      echo -e "Ejemplo: ask \"como ver puertos en uso\""
-    fi
-    return 1
-  fi
-
-  local output
-  output=$(python3 "$__SPOCK_SCRIPT" ask "$@")
-  local action="${output%%:*}"
-  local cmd="${output#*:}"
-  __spock_run_action "$action" "$cmd"
-}
-
-# Diagnóstico y corrección lógica de errores para comandos fallidos
-fix() {
-  local target_cmd="${__SPOCK_LAST_CMD:-}"
-  local exit_code="${__SPOCK_LAST_CODE:-1}"
-  local user_extra="$*"
-
-  if [ -z "$target_cmd" ] && [ -z "$user_extra" ]; then
-    local lang=$(__spock_get_lang)
-    if [[ "$lang" == "en" ]]; then
-      echo -e "\033[1;33m💡 No recent failed commands for Spock to analyze.\033[0m"
-    else
-      echo -e "\033[1;33m💡 No hay comandos fallidos recientes para que Spock analice.\033[0m"
-    fi
-    return 0
-  fi
-
-  # Reset del flag para evitar bucles
-  __SPOCK_CMD_ACTIVE=""
-
-  local output
-  output=$(python3 "$__SPOCK_SCRIPT" fix "$target_cmd" "$exit_code" "$user_extra")
-  local action="${output%%:*}"
-  local cmd="${output#*:}"
-  __spock_run_action "$action" "$cmd"
-}
-
-# Comando multifunción 'spock': chat, explain, debug, fix, lang y consultas
-spock() {
-  local spock_py="$__SPOCK_SCRIPT"
-
-  if [ $# -eq 0 ]; then
-    # Si el comando previo falló, ofrece repararlo; si no, inicia chat interactivo directo
-    if [ -n "$__SPOCK_LAST_CMD" ] && [[ "${__SPOCK_LAST_CODE:-0}" -ne 0 ]]; then
-      fix
-    else
-      python3 "$spock_py" chat
-    fi
-    return
-  fi
-
-  case "$1" in
-    lang|language|idioma)
-      shift
-      python3 "$spock_py" lang "$@"
-      ;;
-    explain|code)
-      shift
-      python3 "$spock_py" explain "$@"
-      ;;
-    debug)
-      shift
-      python3 "$spock_py" debug "$@"
-      ;;
-    chat)
-      shift
-      python3 "$spock_py" chat "$@"
-      ;;
-    fix)
-      shift
-      fix "$@"
-      ;;
-    ask)
-      shift
-      ask "$@"
-      ;;
-    help|--help|-h)
-      local lang=$(__spock_get_lang)
-      if [[ "$lang" == "en" ]]; then
-        echo -e "\033[1;35m🖖 Spock - Terminal Copilot & Logical Assistant\033[0m"
-        echo -e "  \033[36mspock\033[0m                     -> Start interactive direct communication channel"
-        echo -e "  \033[36mspock explain <file|cmd>\033[0m  -> Explain code structure, mechanics & architecture"
-        echo -e "  \033[36mspock debug <error|file>\033[0m  -> Debug errors and deduce root cause"
-        echo -e "  \033[36mspock fix\033[0m                 -> Diagnose and fix the last failed command"
-        echo -e "  \033[36mspock lang [en|es]\033[0m        -> Change language (English / Español)"
-        echo -e "  \033[36mspock \"query\"\033[0m             -> Suggest commands or answer technical questions"
-        echo -e "  \033[36mCtrl + G\033[0m                  -> Keyboard shortcut to diagnose last error"
-      else
-        echo -e "\033[1;35m🖖 Spock - Copiloto de Terminal y Programación Lógica\033[0m"
-        echo -e "  \033[36mspock\033[0m                     -> Inicia el canal de comunicación interactivo (chat)"
-        echo -e "  \033[36mspock explain <archivo|cmd>\033[0m-> Explica código, arquitectura y funcionamiento"
-        echo -e "  \033[36mspock debug <error|archivo>\033[0m-> Depura errores y determina la causa raíz"
-        echo -e "  \033[36mspock fix\033[0m                 -> Diagnostica el último comando fallido"
-        echo -e "  \033[36mspock lang [es|en]\033[0m        -> Cambiar idioma (Español / English)"
-        echo -e "  \033[36mspock \"consulta\"\033[0m          -> Sugiere comandos o responde preguntas técnicas"
-        echo -e "  \033[36mCtrl + G\033[0m                  -> Atajo para diagnosticar el último error"
-      fi
-      ;;
-    *)
-      local output
-      output=$(python3 "$spock_py" query "$@")
-      local action="${output%%:*}"
-      local cmd="${output#*:}"
-      if [[ "$action" == "EXEC" || "$action" == "MODIFY" || "$action" == "CANCEL" ]]; then
-        __spock_run_action "$action" "$cmd"
-      fi
-      ;;
-  esac
-}
-
-# Atajo de teclado (Ctrl+G) para invocar a Spock directamente desde la terminal
-if [[ -o interactive ]]; then
-  __spock_fix_widget() {
-    zle -I
-    fix
-    zle reset-prompt
-  }
-  zle -N __spock_fix_widget
-  bindkey '^G' __spock_fix_widget
-fi
-
-# Hooks automáticos de Zsh para capturar comandos y códigos de salida
-__spock_preexec() {
-  # No registrar llamadas al propio Spock
-  if [[ "$1" != fix* && "$1" != ask* && "$1" != spock* && "$1" != __spock* ]]; then
-    export __SPOCK_LAST_CMD="$1"
-    export __SPOCK_CMD_ACTIVE=1
-  fi
-}
-
-__spock_precmd() {
-  local last_code=$?
-  
-  if [[ -n "$__SPOCK_CMD_ACTIVE" ]]; then
-    export __SPOCK_LAST_CODE=$last_code
-    export __SPOCK_CMD_ACTIVE=""
-
-    # Si el comando falló (exit != 0) y no fue cancelado con Ctrl+C (130) ni suspendido (148)
-    if [[ $last_code -ne 0 && $last_code -ne 130 && $last_code -ne 148 ]]; then
-      local mode="${SPOCK_AUTO_MODE:-${WARP_AI_AUTO_MODE:-ask}}"
-      local lang=$(__spock_get_lang)
-
-      if [[ "$lang" == "en" ]]; then
-        case "$mode" in
-          auto)
-            echo ""
-            fix
-            ;;
-          ask)
-            echo ""
-            echo -en "\033[31m╭─ ❌ Failed ($last_code)\033[0m \033[33m•\033[0m \033[1;36mAnalyze with Spock? [y/N] (or press Ctrl+G):\033[0m "
-            local reply
-            if read -t 5 -k 1 reply 2>/dev/null; then
-              echo ""
-              if [[ "$reply" == "y" || "$reply" == "Y" || "$reply" == "s" || "$reply" == "S" ]]; then
-                fix
-              fi
-            else
-              echo ""
-            fi
-            ;;
-          hint|*)
-            print -P "%F{red}╭─ ❌ Failed with exit code $last_code%f %F{yellow}•%f %F{cyan}Type %Bspock%b or %Bfix%b to analyze or press %B[Ctrl+G]%b%f"
-            ;;
-        esac
-      else
-        case "$mode" in
-          auto)
-            echo ""
-            fix
-            ;;
-          ask)
-            echo ""
-            echo -en "\033[31m╭─ ❌ Falló ($last_code)\033[0m \033[33m•\033[0m \033[1;36m¿Analizar con Spock? [s/N] (o pulsa Ctrl+G):\033[0m "
-            local reply
-            if read -t 5 -k 1 reply 2>/dev/null; then
-              echo ""
-              if [[ "$reply" == "s" || "$reply" == "S" || "$reply" == "y" || "$reply" == "Y" ]]; then
-                fix
-              fi
-            else
-              echo ""
-            fi
-            ;;
-          hint|*)
-            print -P "%F{red}╭─ ❌ Falló con código $last_code%f %F{yellow}•%f %F{cyan}Escribe %Bspock%b o %Bfix%b para analizar o pulsa %B[Ctrl+G]%b%f"
-            ;;
-        esac
-      fi
-    fi
-  fi
-}
-
-autoload -Uz add-zsh-hook
-add-zsh-hook preexec __spock_preexec
-add-zsh-hook precmd __spock_precmd
 
 # ==============================================================================
 # 4. HERRAMIENTAS INTERACTIVAS (HISTORIAL, FZF, ZOXIDE)
@@ -314,8 +64,13 @@ if command -v atuin &>/dev/null; then
   eval "$(atuin init zsh)"
 fi
 
-# fzf: buscador interactivo
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# fzf: buscador interactivo (macOS / CachyOS / Arch / Linux)
+if [ -f ~/.fzf.zsh ]; then
+  source ~/.fzf.zsh
+elif [ -f /usr/share/fzf/key-bindings.zsh ]; then
+  source /usr/share/fzf/key-bindings.zsh
+  [ -f /usr/share/fzf/completion.zsh ] && source /usr/share/fzf/completion.zsh
+fi
 
 # zoxide: reemplazo inteligente de cd
 if command -v zoxide &>/dev/null; then
@@ -334,6 +89,7 @@ fi
 # ==============================================================================
 # 6. PLUGINS DE LÍNEA DE COMANDOS (MACOS / CACHYOS / ARCH / UBUNTU)
 # ==============================================================================
+# zsh-autosuggestions
 for _plugin in \
   "$(brew --prefix 2>/dev/null)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
   "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" \
@@ -344,12 +100,25 @@ for _plugin in \
   fi
 done
 
+# zsh-syntax-highlighting
 for _plugin in \
   "$(brew --prefix 2>/dev/null)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
   "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
   "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"; do
   if [ -f "$_plugin" ]; then
     source "$_plugin"
+    break
+  fi
+done
+
+# zsh-history-substring-search (CachyOS / Arch / Homebrew)
+for _plugin in \
+  "$(brew --prefix 2>/dev/null)/share/zsh-history-substring-search/zsh-history-substring-search.zsh" \
+  "/usr/share/zsh/plugins/zsh-history-substring-search/zsh-history-substring-search.zsh"; do
+  if [ -f "$_plugin" ]; then
+    source "$_plugin"
+    bindkey '^[[A' history-substring-search-up 2>/dev/null || true
+    bindkey '^[[B' history-substring-search-down 2>/dev/null || true
     break
   fi
 done
@@ -372,6 +141,90 @@ if command -v bat &>/dev/null; then
   alias preview="bat --style=numbers,changes"
 fi
 
+# ==============================================================================
+# 8. INTEGRACIONES Y ALIASES PARA CACHYOS / ARCH LINUX
+# ==============================================================================
+if command -v pacman &>/dev/null; then
+  # Gestión rápida con Pacman
+  alias pac="sudo pacman"
+  alias pacin="sudo pacman -S --needed"
+  alias pacup="sudo pacman -Syu"
+  alias pacrm="sudo pacman -Rns"
+  alias pacs="pacman -Ss"
+  alias pacq="pacman -Q"
+  alias pacorph="sudo pacman -Rns \$(pacman -Qtdq) 2>/dev/null || echo 'No hay paquetes huérfanos / No orphan packages.'"
 
-fastfetch
+  # Gestión con AUR Helper (Paru predeterminado en CachyOS, o Yay)
+  if command -v paru &>/dev/null; then
+    alias p="paru"
+    alias pin="paru -S --needed"
+    alias pup="paru -Syu"
+    alias prm="paru -Rns"
+    alias ps="paru -Ss"
+  elif command -v yay &>/dev/null; then
+    alias y="yay"
+    alias yin="yay -S --needed"
+    alias yup="yay -Syu"
+    alias yrm="yay -Rns"
+    alias ys="yay -Ss"
+  fi
+
+  # Herramientas exclusivas del ecosistema CachyOS
+  if command -v cachyos-rate-mirrors &>/dev/null; then
+    alias ratemirrors="sudo cachyos-rate-mirrors"
+  fi
+  if command -v cachyos-kernel-manager &>/dev/null; then
+    alias kernelmgr="cachyos-kernel-manager"
+  fi
+  if command -v chwd &>/dev/null; then
+    alias hwinfo="chwd --list"
+  fi
+  if command -v cachyos-bugreport &>/dev/null; then
+    alias cachyreport="cachyos-bugreport"
+  fi
+fi
+
+# ==============================================================================
+# 9. INTEGRACIONES Y ALIASES PARA UBUNTU / DEBIAN
+# ==============================================================================
+if command -v apt &>/dev/null; then
+  alias aptin="sudo apt update && sudo apt install -y"
+  alias aptup="sudo apt update && sudo apt upgrade -y"
+  alias aptrm="sudo apt remove --purge -y"
+  alias apts="apt search"
+  alias aptclean="sudo apt autoremove -y && sudo apt clean"
+fi
+
+# ==============================================================================
+# 10. INTEGRACIONES Y UTILIDADES PARA WSL2 (WINDOWS SUBSYSTEM FOR LINUX)
+# ==============================================================================
+if [[ -n "$WSL_DISTRO_NAME" ]] || grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then
+  export IS_WSL=1
+
+  # Apertura de archivos o URLs en el navegador/aplicación de Windows
+  if command -v wslview &>/dev/null; then
+    alias open="wslview"
+  elif command -v cmd.exe &>/dev/null; then
+    alias open="cmd.exe /c start"
+  fi
+
+  # Integración de explorador y portapapeles de Windows
+  command -v explorer.exe &>/dev/null && alias explore="explorer.exe ."
+  command -v clip.exe &>/dev/null && alias clip="clip.exe"
+fi
+
+# ==============================================================================
+# 11. INFORMACIÓN DEL SISTEMA: FASTFETCH (MACOS, CACHYOS, UBUNTU, WSL2)
+# ==============================================================================
+alias ff="fastfetch"
+alias sysinfo="fastfetch"
+alias ff-logo="fastfetch -c config-macos-logo.jsonc"
+alias ff-animal="fastfetch -c config-macos-animal.jsonc"
+alias ff-pokemon="fastfetch -c config-macos-pokemon.jsonc"
+
+# Ejecutar banner Fastfetch en sesiones de terminal interactivas
+if command -v fastfetch &>/dev/null && [[ -o interactive ]] && [[ -t 1 ]]; then
+  fastfetch
+fi
+
 

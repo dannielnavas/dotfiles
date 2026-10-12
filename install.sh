@@ -2,8 +2,8 @@
 set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SPOCK_MODEL="qwen2.5-coder:1.5b"
-SPOCK_CONFIG_DIR="$HOME/.config/spock"
+DILIX_MODEL="qwen2.5-coder:1.5b"
+DILIX_CONFIG_DIR="$HOME/.config/dilix"
 
 # ==============================================================================
 # SELECCIÓN DE IDIOMA / LANGUAGE SELECTION
@@ -13,6 +13,31 @@ for arg in "$@"; do
   case "$arg" in
     --en|--english) INSTALL_LANG="en" ;;
     --es|--spanish) INSTALL_LANG="es" ;;
+    --macos|--mac) TARGET_OS="macos" ;;
+    --cachyos|--arch) TARGET_OS="cachyos" ;;
+    --linux|--ubuntu|--debian) TARGET_OS="linux" ;;
+    --wsl2|--wsl|--windows) TARGET_OS="wsl2" ;;
+    --help|-h|--options|--opciones)
+      echo "============================================================"
+      echo "  🚀 Dotfiles & Dilix AI - Instalador / Installer"
+      echo "============================================================"
+      echo "Uso / Usage: ./install.sh [opciones / options]"
+      echo ""
+      echo "Opciones de Idioma / Language Options:"
+      echo "  --es, --spanish        Instalar en Español por defecto"
+      echo "  --en, --english        Install in English by default"
+      echo ""
+      echo "Opciones de Sistema / Operating System Options:"
+      echo "  --macos, --mac         macOS (Apple Silicon / Intel)"
+      echo "  --cachyos, --arch      CachyOS / Arch Linux (pacman)"
+      echo "  --linux, --ubuntu      Ubuntu / Debian Linux (apt)"
+      echo "  --wsl2, --wsl          Windows 11 - WSL2"
+      echo ""
+      echo "Ayuda / Help:"
+      echo "  --help, -h, --options  Muestra esta lista de opciones disponibles"
+      echo "============================================================"
+      exit 0
+      ;;
   esac
 done
 
@@ -80,63 +105,65 @@ elif [ -f /etc/os-release ]; then
   fi
 fi
 
-if [ "$INSTALL_LANG" = "en" ]; then
-  echo "=========================================="
-  echo "  🚀 Dotfiles & Environment Installer"
-  echo "  🖖 Includes complete Spock AI suite"
-  echo "=========================================="
-  if [ -n "$DETECTED_NAME" ]; then
-    echo "🔍 Detected system: $DETECTED_NAME"
-  fi
-  echo "Select the environment you want to install on:"
-  echo "  1) macOS"
-  echo "  2) CachyOS / Arch Linux"
-  echo "  3) Linux (Ubuntu / Debian)"
-  echo "  4) Windows 11 - WSL2"
-  echo "=========================================="
+if [ -z "$TARGET_OS" ]; then
+  if [ "$INSTALL_LANG" = "en" ]; then
+    echo "=========================================="
+    echo "  🚀 Dotfiles & Environment Installer"
+    echo "  ✨ Includes complete Dilix AI suite"
+    echo "=========================================="
+    if [ -n "$DETECTED_NAME" ]; then
+      echo "🔍 Detected system: $DETECTED_NAME"
+    fi
+    echo "Select the environment you want to install on:"
+    echo "  1) macOS"
+    echo "  2) CachyOS / Arch Linux"
+    echo "  3) Linux (Ubuntu / Debian)"
+    echo "  4) Windows 11 - WSL2"
+    echo "=========================================="
 
-  PROMPT_TEXT="Enter an option [1-4]"
-  if [ -n "$DETECTED_CHOICE" ]; then
-    PROMPT_TEXT="$PROMPT_TEXT (default: $DETECTED_CHOICE): "
+    PROMPT_TEXT="Enter an option [1-4]"
+    if [ -n "$DETECTED_CHOICE" ]; then
+      PROMPT_TEXT="$PROMPT_TEXT (default: $DETECTED_CHOICE): "
+    else
+      PROMPT_TEXT="$PROMPT_TEXT: "
+    fi
   else
-    PROMPT_TEXT="$PROMPT_TEXT: "
-  fi
-else
-  echo "=========================================="
-  echo "  🚀 Instalador de Dotfiles & Entorno"
-  echo "  🖖 Incluye suite completa de Spock AI"
-  echo "=========================================="
-  if [ -n "$DETECTED_NAME" ]; then
-    echo "🔍 Sistema detectado: $DETECTED_NAME"
-  fi
-  echo "Selecciona el entorno en el que deseas instalar:"
-  echo "  1) macOS"
-  echo "  2) CachyOS / Arch Linux"
-  echo "  3) Linux (Ubuntu / Debian)"
-  echo "  4) Windows 11 - WSL2"
-  echo "=========================================="
+    echo "=========================================="
+    echo "  🚀 Instalador de Dotfiles & Entorno"
+    echo "  ✨ Incluye suite completa de Dilix AI"
+    echo "=========================================="
+    if [ -n "$DETECTED_NAME" ]; then
+      echo "🔍 Sistema detectado: $DETECTED_NAME"
+    fi
+    echo "Selecciona el entorno en el que deseas instalar:"
+    echo "  1) macOS"
+    echo "  2) CachyOS / Arch Linux"
+    echo "  3) Linux (Ubuntu / Debian)"
+    echo "  4) Windows 11 - WSL2"
+    echo "=========================================="
 
-  PROMPT_TEXT="Ingresa una opción [1-4]"
-  if [ -n "$DETECTED_CHOICE" ]; then
-    PROMPT_TEXT="$PROMPT_TEXT (por defecto $DETECTED_CHOICE): "
-  else
-    PROMPT_TEXT="$PROMPT_TEXT: "
+    PROMPT_TEXT="Ingresa una opción [1-4]"
+    if [ -n "$DETECTED_CHOICE" ]; then
+      PROMPT_TEXT="$PROMPT_TEXT (por defecto $DETECTED_CHOICE): "
+    else
+      PROMPT_TEXT="$PROMPT_TEXT: "
+    fi
   fi
+
+  read -rp "$PROMPT_TEXT" OS_CHOICE
+  OS_CHOICE="${OS_CHOICE:-$DETECTED_CHOICE}"
+
+  case "$OS_CHOICE" in
+    1) TARGET_OS="macos" ;;
+    2) TARGET_OS="cachyos" ;;
+    3) TARGET_OS="linux" ;;
+    4) TARGET_OS="wsl2" ;;
+    *)
+      echo_lang "❌ Opción no válida. Cancelando instalación." "❌ Invalid option. Aborting installation."
+      exit 1
+      ;;
+  esac
 fi
-
-read -rp "$PROMPT_TEXT" OS_CHOICE
-OS_CHOICE="${OS_CHOICE:-$DETECTED_CHOICE}"
-
-case "$OS_CHOICE" in
-  1) TARGET_OS="macos" ;;
-  2) TARGET_OS="cachyos" ;;
-  3) TARGET_OS="linux" ;;
-  4) TARGET_OS="wsl2" ;;
-  *)
-    echo_lang "❌ Opción no válida. Cancelando instalación." "❌ Invalid option. Aborting installation."
-    exit 1
-    ;;
-esac
 
 echo_lang "➡️ Configurando para: $TARGET_OS..." "➡️ Configuring for: $TARGET_OS..."
 
@@ -174,9 +201,22 @@ if [ "$TARGET_OS" = "macos" ]; then
     fzf \
     eza \
     bat \
-    gh
+    gh \
+    fastfetch \
+    wget
 
   brew install --cask font-jetbrains-mono-nerd-font || true
+
+  # Descarga de assets y temas de Fastfetch para macOS (sqlsec/fastfetch)
+  if [ ! -d "$DOTFILES_DIR/fastfetch/macos" ]; then
+    echo_lang "🎨 Descargando temas y logos de Fastfetch para macOS..." "🎨 Downloading Fastfetch themes and logos for macOS..."
+    (
+      cd "$DOTFILES_DIR" || exit 1
+      wget https://github.com/sqlsec/fastfetch/releases/download/v0.1/fastfetch-for-macOS.zip
+      unzip fastfetch-for-macOS.zip && rm fastfetch-for-macOS.zip
+      rm -rf __MACOSX
+    )
+  fi
 
 elif [ "$TARGET_OS" = "cachyos" ]; then
   echo_lang "📦 Configurando CachyOS / Arch Linux..." "📦 Configuring CachyOS / Arch Linux..."
@@ -204,11 +244,15 @@ elif [ "$TARGET_OS" = "cachyos" ]; then
     atuin
     zoxide
     eza
+    fastfetch
     zsh-autosuggestions
     zsh-syntax-highlighting
+    zsh-completions
+    zsh-history-substring-search
     wezterm
     github-cli
     ttf-jetbrains-mono-nerd
+    noto-fonts-emoji
     wl-clipboard
     xclip
   )
@@ -220,16 +264,37 @@ elif [ "$TARGET_OS" = "cachyos" ]; then
     done
   }
 
-  # Ollama en CachyOS / Arch
+  # Ollama con detección y aceleración por GPU en CachyOS / Arch
   if ! command -v ollama &>/dev/null; then
-    echo_lang "🤖 Instalando Ollama..." "🤖 Installing Ollama..."
-    sudo pacman -S --needed --noconfirm ollama || {
+    OLLAMA_PKG="ollama"
+    if command -v nvidia-smi &>/dev/null || lspci 2>/dev/null | grep -qi "nvidia"; then
+      if pacman -Si ollama-cuda &>/dev/null; then
+        OLLAMA_PKG="ollama-cuda"
+        echo_lang "🎮 GPU NVIDIA detectada: instalando $OLLAMA_PKG con soporte CUDA..." "🎮 NVIDIA GPU detected: installing $OLLAMA_PKG with CUDA acceleration..."
+      fi
+    elif lspci 2>/dev/null | grep -qiE "vga.*(amd|radeon)|display.*(amd|radeon)"; then
+      if pacman -Si ollama-rocm &>/dev/null; then
+        OLLAMA_PKG="ollama-rocm"
+        echo_lang "🎮 GPU AMD detectada: instalando $OLLAMA_PKG con soporte ROCm..." "🎮 AMD GPU detected: installing $OLLAMA_PKG with ROCm acceleration..."
+      fi
+    fi
+
+    echo_lang "🤖 Instalando $OLLAMA_PKG..." "🤖 Installing $OLLAMA_PKG..."
+    sudo pacman -S --needed --noconfirm "$OLLAMA_PKG" || {
       if [ -n "$AUR_HELPER" ]; then
-        $AUR_HELPER -S --needed --noconfirm ollama || true
+        $AUR_HELPER -S --needed --noconfirm "$OLLAMA_PKG" || true
       else
         curl -fsSL https://ollama.com/install.sh | sh || true
       fi
     }
+  fi
+
+  # Asegurar Zsh como shell predeterminado si es necesario
+  CURRENT_SHELL="$(getent passwd "$USER" 2>/dev/null | cut -d: -f7 || echo "$SHELL")"
+  ZSH_BIN="$(command -v zsh 2>/dev/null || echo "/usr/bin/zsh")"
+  if [ -n "$ZSH_BIN" ] && [ "$CURRENT_SHELL" != "$ZSH_BIN" ]; then
+    echo_lang "🐚 Estableciendo Zsh como shell predeterminado..." "🐚 Setting Zsh as default shell..."
+    sudo chsh -s "$ZSH_BIN" "$USER" 2>/dev/null || chsh -s "$ZSH_BIN" 2>/dev/null || true
   fi
 
 elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
@@ -280,6 +345,22 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
 
   sudo apt install -y zsh-autosuggestions zsh-syntax-highlighting || true
 
+  # Fastfetch
+  if ! command -v fastfetch &>/dev/null; then
+    echo_lang "🚀 Instalando Fastfetch..." "🚀 Installing Fastfetch..."
+    if sudo apt install -y fastfetch 2>/dev/null; then
+      true
+    else
+      echo_lang "📦 Configurando repositorio PPA para Fastfetch..." "📦 Setting up Fastfetch PPA..."
+      sudo add-apt-repository -y ppa:zhangsongcui3371/fastfetch 2>/dev/null && sudo apt update && sudo apt install -y fastfetch 2>/dev/null || {
+        ARCH_DEB="amd64"
+        [ "$(uname -m)" = "aarch64" ] && ARCH_DEB="aarch64"
+        FF_URL="https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${ARCH_DEB}.deb"
+        wget -qO /tmp/fastfetch.deb "$FF_URL" && sudo dpkg -i /tmp/fastfetch.deb && rm -f /tmp/fastfetch.deb || true
+      }
+    fi
+  fi
+
   # Ollama
   if ! command -v ollama &>/dev/null; then
     echo_lang "🤖 Instalando Ollama..." "🤖 Installing Ollama..."
@@ -288,34 +369,35 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
 fi
 
 # ==============================================================================
-# 2. CONFIGURACIÓN E INSTALACIÓN DEL SISTEMA SPOCK AI / SPOCK AI CONFIGURATION
+# 2. CONFIGURACIÓN E INSTALACIÓN DEL SISTEMA DILIX AI / DILIX AI CONFIGURATION
 # ==============================================================================
 echo ""
 echo "=========================================="
-echo_lang "  🖖 Configurando Sistema Spock AI" "  🖖 Configuring Spock AI System"
+echo_lang "  ✨ Configurando Sistema Dilix AI" "  ✨ Configuring Dilix AI System"
 echo "=========================================="
 
-# Permisos ejecutables para el script de Spock
-chmod +x "$DOTFILES_DIR/zsh/spock.py"
+# Permisos ejecutables para el script y plugin de Dilix
+DILIX_SCRIPT_PATH="$DOTFILES_DIR/zsh/plugins/dilix/dilix.py"
+chmod +x "$DILIX_SCRIPT_PATH"
 
-# Enlace directo en ~/.local/bin/spock para ejecución global
-ln -sf "$DOTFILES_DIR/zsh/spock.py" "$HOME/.local/bin/spock"
-echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/spock" "✅ Executable link created: $HOME/.local/bin/spock"
+# Enlace directo en ~/.local/bin/dilix para ejecución global
+ln -sf "$DILIX_SCRIPT_PATH" "$HOME/.local/bin/dilix"
+echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/dilix" "✅ Executable link created: $HOME/.local/bin/dilix"
 
-# Configuración persistente e idioma de Spock
-mkdir -p "$SPOCK_CONFIG_DIR"
-CONFIG_FILE="$SPOCK_CONFIG_DIR/config.json"
+# Configuración persistente e idioma de Dilix
+mkdir -p "$DILIX_CONFIG_DIR"
+CONFIG_FILE="$DILIX_CONFIG_DIR/config.json"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   if [ "$INSTALL_LANG" = "en" ]; then
     echo '{"lang": "en"}' > "$CONFIG_FILE"
-    echo "✅ Spock configured in English (~/.config/spock/config.json)."
+    echo "✅ Dilix configured in English (~/.config/dilix/config.json)."
   else
     echo '{"lang": "es"}' > "$CONFIG_FILE"
-    echo "✅ Spock configurado en idioma Español (~/.config/spock/config.json)."
+    echo "✅ Dilix configurado en idioma Español (~/.config/dilix/config.json)."
   fi
 else
-  echo_lang "ℹ️ Configuración existente de Spock detectada en $CONFIG_FILE." "ℹ️ Existing Spock configuration detected at $CONFIG_FILE."
+  echo_lang "ℹ️ Configuración existente de Dilix detectada en $CONFIG_FILE." "ℹ️ Existing Dilix configuration detected at $CONFIG_FILE."
 fi
 
 # Iniciar o verificar el servicio Ollama
@@ -347,15 +429,15 @@ else
   echo_lang "✅ Servicio Ollama ya se encuentra activo." "✅ Ollama service is already active."
 fi
 
-# Descarga y verificación del modelo de IA para Spock
+# Descarga y verificación del modelo de IA para Dilix
 if command -v ollama &>/dev/null; then
-  echo_lang "🧠 Verificando modelo de IA de Spock ($SPOCK_MODEL)..." "🧠 Checking Spock AI model ($SPOCK_MODEL)..."
-  if ollama list 2>/dev/null | grep -q "$SPOCK_MODEL"; then
-    echo_lang "✅ Modelo $SPOCK_MODEL ya disponible en Ollama." "✅ Model $SPOCK_MODEL already available in Ollama."
+  echo_lang "🧠 Verificando modelo de IA de Dilix ($DILIX_MODEL)..." "🧠 Checking Dilix AI model ($DILIX_MODEL)..."
+  if ollama list 2>/dev/null | grep -q "$DILIX_MODEL"; then
+    echo_lang "✅ Modelo $DILIX_MODEL ya disponible en Ollama." "✅ Model $DILIX_MODEL already available in Ollama."
   else
-    echo_lang "📥 Descargando modelo $SPOCK_MODEL para Spock (esto puede tardar unos minutos según tu conexión)..." "📥 Downloading $SPOCK_MODEL model for Spock (this may take a few minutes depending on your connection)..."
-    ollama pull "$SPOCK_MODEL" || {
-      echo_lang "⚠️ No se pudo completar la descarga automática. Ejecuta 'ollama pull $SPOCK_MODEL' cuando tengas conexión." "⚠️ Automatic download could not be completed. Run 'ollama pull $SPOCK_MODEL' when connected."
+    echo_lang "📥 Descargando modelo $DILIX_MODEL para Dilix (esto puede tardar unos minutos según tu conexión)..." "📥 Downloading $DILIX_MODEL model for Dilix (this may take a few minutes depending on your connection)..."
+    ollama pull "$DILIX_MODEL" || {
+      echo_lang "⚠️ No se pudo completar la descarga automática. Ejecuta 'ollama pull $DILIX_MODEL' cuando tengas conexión." "⚠️ Automatic download could not be completed. Run 'ollama pull $DILIX_MODEL' when connected."
     }
   fi
 fi
@@ -365,7 +447,7 @@ fi
 # ==============================================================================
 echo ""
 echo_lang "🔗 Creando enlaces simbólicos de Dotfiles..." "🔗 Creating Dotfiles symlinks..."
-rm -f ~/.zshrc ~/.wezterm.lua ~/.config/starship.toml
+rm -rf ~/.zshrc ~/.wezterm.lua ~/.config/starship.toml ~/.config/fastfetch
 
 # Zsh
 ln -sf "$DOTFILES_DIR/zsh/.zshrc" ~/.zshrc
@@ -403,6 +485,23 @@ EOF
   fi
 fi
 
+# Fastfetch
+if [ "$TARGET_OS" = "macos" ] && [ ! -d "$DOTFILES_DIR/fastfetch/macos" ]; then
+  echo_lang "🎨 Descargando temas y logos de Fastfetch para macOS..." "🎨 Downloading Fastfetch themes and logos for macOS..."
+  (
+    cd "$DOTFILES_DIR" || exit 1
+    wget https://github.com/sqlsec/fastfetch/releases/download/v0.1/fastfetch-for-macOS.zip
+    unzip fastfetch-for-macOS.zip && rm fastfetch-for-macOS.zip
+    rm -rf __MACOSX
+  )
+fi
+
+if [ -d "$DOTFILES_DIR/fastfetch" ]; then
+  mkdir -p ~/.config
+  ln -sfn "$DOTFILES_DIR/fastfetch" ~/.config/fastfetch
+  echo "  ✔ ~/.config/fastfetch -> $DOTFILES_DIR/fastfetch"
+fi
+
 # ==============================================================================
 # 4. FINALIZAR Y COMPILAR / FINALIZE & COMPILE
 # ==============================================================================
@@ -414,31 +513,31 @@ echo ""
 if [ "$INSTALL_LANG" = "en" ]; then
   echo "============================================================"
   echo "  🎉 Installation complete for $TARGET_OS!"
-  echo "  🖖 Spock system is 100% operational."
+  echo "  ✨ Dilix system is 100% operational."
   echo "============================================================"
-  echo "Available Spock commands and features:"
-  echo "  • spock                    -> Open interactive chat session"
-  echo "  • spock \"<query>\"          -> Suggest commands or answer questions"
+  echo "Available Dilix commands and features:"
+  echo "  • dilix                    -> Open interactive chat session"
+  echo "  • dilix \"<query>\"          -> Suggest commands or answer questions"
   echo "  • ask \"<query>\"            -> Suggest commands and run them interactively"
   echo "  • fix  (or Ctrl + G)       -> Diagnose and fix the last command error"
-  echo "  • spock explain <file>     -> Explain code architecture and logic"
-  echo "  • spock debug <error>      -> Deduce root cause and anomalies"
-  echo "  • spock lang [es|en]       -> Change language anytime"
+  echo "  • dilix explain <file>     -> Explain code architecture and logic"
+  echo "  • dilix debug <error>      -> Deduce root cause and anomalies"
+  echo "  • dilix lang [es|en]       -> Change language anytime"
   echo "============================================================"
   echo "Run 'exec zsh' or restart your terminal to begin."
 else
   echo "============================================================"
   echo "  🎉 ¡Instalación completa para $TARGET_OS!"
-  echo "  🖖 El sistema Spock está 100% operativo."
+  echo "  ✨ El sistema Dilix está 100% operativo."
   echo "============================================================"
-  echo "Comandos y funciones de Spock disponibles:"
-  echo "  • spock                    -> Abre el canal de chat interactivo"
-  echo "  • spock \"<consulta>\"       -> Sugiere comandos o resuelve dudas"
+  echo "Comandos y funciones de Dilix disponibles:"
+  echo "  • dilix                    -> Abre el canal de chat interactivo"
+  echo "  • dilix \"<consulta>\"       -> Sugiere comandos o resuelve dudas"
   echo "  • ask \"<consulta>\"         -> Sugiere comandos y permite ejecutarlos"
   echo "  • fix  (o Ctrl + G)        -> Diagnostica y corrige el último error"
-  echo "  • spock explain <archivo>  -> Explica arquitectura y código"
-  echo "  • spock debug <error>      -> Deduce causa raíz y anomalías"
-  echo "  • spock lang [es|en]       -> Cambia el idioma en cualquier momento"
+  echo "  • dilix explain <archivo>  -> Explica arquitectura y código"
+  echo "  • dilix debug <error>      -> Deduce causa raíz y anomalías"
+  echo "  • dilix lang [es|en]       -> Cambia el idioma en cualquier momento"
   echo "============================================================"
   echo "Ejecuta 'exec zsh' o reinicia tu terminal para comenzar."
 fi

@@ -3,9 +3,14 @@ local act = wezterm.action
 local nf = wezterm.nerdfonts
 local config = wezterm.config_builder()
 
--- Detectar si corre en Windows para entrar automáticamente a WSL2
+-- Detectar si corre en Windows para entrar automáticamente a WSL2 (Ubuntu, CachyOS, etc.)
 if wezterm.target_triple:find("windows") then
-  config.default_domain = 'WSL:Ubuntu'
+  local wsl_domains = wezterm.default_wsl_domains and wezterm.default_wsl_domains() or {}
+  if #wsl_domains > 0 then
+    config.default_domain = wsl_domains[1].name
+  else
+    config.default_domain = 'WSL:Ubuntu'
+  end
 end
 
 ----------------------------------------------------
@@ -275,7 +280,7 @@ end)
 config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
 
 config.keys = {
-  -- === Splits y Paneles (Soporta estilo Warp y Leader) ===
+  -- === Splits y Paneles (Soporta estilo Dilix y Leader) ===
   { key = 'd', mods = 'CMD', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
   { key = 'd', mods = 'CMD|SHIFT', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = '|', mods = 'LEADER|SHIFT', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },

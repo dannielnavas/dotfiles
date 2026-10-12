@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Spock - Asistente Lógico de Terminal y Copiloto de Programación para Zsh.
+Dilix - Asistente Lógico de Terminal y Copiloto de Programación para Zsh.
 Soporte Bilingüe: Español (es) & Inglés (en).
-Configuración persistente en ~/.config/spock/config.json.
+Configuración persistente en ~/.config/dilix/config.json.
 """
 
 import sys
@@ -22,10 +22,10 @@ except ImportError:
 # ==============================================================================
 # CONFIGURACIÓN Y CONSTANTES
 # ==============================================================================
-DEFAULT_MODEL = os.environ.get("SPOCK_MODEL", os.environ.get("WARP_AI_MODEL", "qwen2.5-coder:1.5b"))
+DEFAULT_MODEL = os.environ.get("DILIX_MODEL", "qwen2.5-coder:1.5b")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
-CONFIG_DIR = os.path.expanduser("~/.config/spock")
+CONFIG_DIR = os.path.expanduser("~/.config/dilix")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 # Códigos de Color ANSI
@@ -46,10 +46,14 @@ RESET = "\033[0m"
 TEXTS = {
     "es": {
         "persona": (
-            "Eres el Oficial Científico Spock de la USS Enterprise, adaptado como copiloto de terminal e ingeniero de software en Mac/Linux.\n"
-            "Directrices:\n"
-            "- Eres supremamente lógico, analítico, cortés, sereno y perspicaz.\n"
-            "- Utilizas expresiones vulcanas como: 'Fascinante.', 'Lógicamente...', 'Desde una perspectiva puramente racional...', 'Es altamente probable que...', 'El curso de acción óptimo es...'.\n"
+            "Eres Dilix, un asistente inteligente de terminal, copiloto de programación y experto en ingeniería de software multiplataforma (con soporte de primera clase para WSL2, CachyOS / Arch Linux, Ubuntu / Debian y macOS).\n"
+            "Directrices de entorno:\n"
+            "- Identifica y adapta tus respuestas según el sistema operativo del usuario.\n"
+            "- En macOS: aprovecha Homebrew (brew), launchctl, pbcopy y utilidades de Apple Silicon / Intel.\n"
+            "- En CachyOS / Arch Linux: utiliza pacman, paru/yay, kernels optimizados y repositorios de CachyOS.\n"
+            "- En Ubuntu / Debian: utiliza apt, dpkg, systemd y convenciones estándar de Debian/Ubuntu.\n"
+            "- En WSL2: maneja la interoperabilidad con Windows (/mnt/c, wslpath, wslview, clip.exe, explorer.exe).\n"
+            "- Eres sumamente analítico, cortés, sereno, didáctico y perspicaz.\n"
             "- Responde SIEMPRE en ESPAÑOL de forma fluida, natural, concisa y elegante.\n"
             "- Vas directo a la raíz del problema con rigor técnico y claridad didáctica.\n"
         ),
@@ -59,11 +63,11 @@ TEXTS = {
         "box_ask": "Sugerencia de Comando",
         "box_chat": "Canal de Comunicación Directo",
         "box_query": "Análisis Lógico",
-        "chat_welcome_1": "Oficial Científico Spock a su servicio.",
+        "chat_welcome_1": "Dilix a su servicio.",
         "chat_welcome_2": "Puedo explicar código, depurar errores y analizar lógica de sistemas.",
         "chat_welcome_3": "Escribe 'q' o 'exit' para salir, 'clear' para limpiar pantalla.",
-        "chat_farewell": "Larga vida y prosperidad.",
-        "chat_session_ended": "Larga vida y prosperidad. Sesión finalizada.",
+        "chat_farewell": "Sesión finalizada. ¡Hasta pronto!",
+        "chat_session_ended": "Sesión finalizada. ¡Hasta pronto!",
         "menu_action": "Acción:",
         "menu_exec": "Ejecutar",
         "menu_prompt": "En el prompt",
@@ -91,10 +95,14 @@ TEXTS = {
     },
     "en": {
         "persona": (
-            "You are Science Officer Spock of the USS Enterprise, serving as a logical terminal copilot and software engineer on Mac/Linux.\n"
-            "Guidelines:\n"
-            "- You are supremely logical, analytical, courteous, composed, and perceptive.\n"
-            "- Use subtle Vulcan phrasing such as: 'Fascinating.', 'Logically...', 'From a purely rational perspective...', 'It is highly probable that...', 'The optimal course of action is...'.\n"
+            "You are Dilix, an intelligent terminal assistant, coding copilot, and expert software engineer across platforms (with first-class support for WSL2, CachyOS / Arch Linux, Ubuntu / Debian, and macOS).\n"
+            "Environment guidelines:\n"
+            "- Identify and tailor your recommendations to the user's specific OS environment.\n"
+            "- On macOS: utilize Homebrew (brew), launchctl, pbcopy, and Apple Silicon / Intel paths.\n"
+            "- On CachyOS / Arch Linux: prioritize pacman, paru/yay, optimized kernels, and CachyOS repos.\n"
+            "- On Ubuntu / Debian: prioritize apt, dpkg, systemd, and Debian/Ubuntu packages.\n"
+            "- On WSL2: account for Windows interoperability (/mnt/c, wslpath, wslview, clip.exe, explorer.exe).\n"
+            "- You are analytical, courteous, composed, articulate, and perceptive.\n"
             "- ALWAYS respond in ENGLISH in a fluent, natural, concise, and articulate manner.\n"
             "- Address the root cause directly with technical rigor and didactic clarity.\n"
         ),
@@ -104,11 +112,11 @@ TEXTS = {
         "box_ask": "Command Suggestion",
         "box_chat": "Direct Communication Channel",
         "box_query": "Logical Analysis",
-        "chat_welcome_1": "Science Officer Spock at your service.",
+        "chat_welcome_1": "Dilix at your service.",
         "chat_welcome_2": "I can explain code, debug errors, and analyze system logic.",
         "chat_welcome_3": "Type 'q' or 'exit' to quit, 'clear' to clear screen.",
-        "chat_farewell": "Live long and prosper.",
-        "chat_session_ended": "Live long and prosper. Session ended.",
+        "chat_farewell": "Session ended. See you soon!",
+        "chat_session_ended": "Session ended. See you soon!",
         "menu_action": "Action:",
         "menu_exec": "Execute",
         "menu_prompt": "In prompt",
@@ -157,8 +165,8 @@ def save_config(cfg: dict):
         print_tty(f"{YELLOW}⚠️ No se pudo guardar configuración: {e}{RESET}")
 
 def get_current_language() -> str:
-    """Obtiene el idioma activo: prioridad variable de entorno SPOCK_LANG > config.json."""
-    env_lang = os.environ.get("SPOCK_LANG", "").lower().strip()
+    """Obtiene el idioma activo: prioridad variable de entorno DILIX_LANG > config.json."""
+    env_lang = os.environ.get("DILIX_LANG", "").lower().strip()
     if env_lang in ("es", "en"):
         return env_lang
     cfg = load_config()
@@ -175,7 +183,7 @@ def ensure_language() -> str:
 
     # Menú de selección inicial
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}Configuración de Idioma / Language Setup{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Configuración de Idioma / Language Setup{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
     print_tty(f"{CYAN}│{RESET} Por favor seleccione su idioma preferido:")
     print_tty(f"{CYAN}│{RESET} Please select your preferred language:")
     print_tty(f"{CYAN}│{RESET}   {GREEN}[1]{RESET} Español  (Spanish)")
@@ -192,9 +200,9 @@ def ensure_language() -> str:
     save_config(cfg)
 
     if selected == "en":
-        print_tty(f" {GREEN}✔ Language configured to English.{RESET} Saved as default in ~/.config/spock/config.json\n")
+        print_tty(f" {GREEN}✔ Language configured to English.{RESET} Saved as default in ~/.config/dilix/config.json\n")
     else:
-        print_tty(f" {GREEN}✔ Idioma configurado a Español.{RESET} Guardado como predeterminado en ~/.config/spock/config.json\n")
+        print_tty(f" {GREEN}✔ Idioma configurado a Español.{RESET} Guardado como predeterminado en ~/.config/dilix/config.json\n")
     return selected
 
 def t(key: str, **kwargs) -> str:
@@ -266,12 +274,17 @@ def clean_command(cmd: str) -> str:
 
 def copy_to_clipboard(text: str) -> bool:
     system = platform.system().lower()
+    is_wsl = (
+        "microsoft" in platform.uname().release.lower()
+        or "wsl" in platform.uname().release.lower()
+        or os.path.exists("/mnt/c/Windows")
+    )
     try:
         if system == "darwin":
             p = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
             p.communicate(text.encode("utf-8"))
             return p.returncode == 0
-        elif "microsoft" in platform.uname().release.lower() or os.path.exists("/mnt/c/Windows"):
+        elif is_wsl and subprocess.run(["which", "clip.exe"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             p = subprocess.Popen(["clip.exe"], stdin=subprocess.PIPE)
             p.communicate(text.encode("utf-8"))
             return p.returncode == 0
@@ -284,13 +297,58 @@ def copy_to_clipboard(text: str) -> bool:
                 p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE)
                 p.communicate(text.encode("utf-8"))
                 return p.returncode == 0
+            elif subprocess.run(["which", "xsel"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+                p = subprocess.Popen(["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE)
+                p.communicate(text.encode("utf-8"))
+                return p.returncode == 0
+            elif is_wsl:
+                p = subprocess.Popen(["clip.exe"], stdin=subprocess.PIPE)
+                p.communicate(text.encode("utf-8"))
+                return p.returncode == 0
     except Exception:
         pass
     return False
 
+def get_os_info() -> str:
+    system = platform.system().lower()
+    is_wsl = (
+        "microsoft" in platform.uname().release.lower()
+        or "wsl" in platform.uname().release.lower()
+        or os.path.exists("/mnt/c/Windows")
+    )
+
+    if system == "darwin":
+        return f"macOS ({platform.mac_ver()[0]})"
+    elif system == "linux" or is_wsl:
+        distro_str = "Linux"
+        if os.path.exists("/etc/os-release"):
+            try:
+                with open("/etc/os-release") as f:
+                    data = {}
+                    for line in f:
+                        if "=" in line:
+                            k, v = line.strip().split("=", 1)
+                            data[k] = v.strip('"')
+                    distro = data.get("PRETTY_NAME", data.get("NAME", "Linux"))
+                    distro_id = data.get("ID", "").lower()
+                    if "cachyos" in distro_id or "cachyos" in distro.lower():
+                        distro_str = "CachyOS (Arch-based, package manager: paru/pacman, kernel: linux-cachyos)"
+                    elif "arch" in distro_id:
+                        distro_str = "Arch Linux (package manager: pacman/paru/yay)"
+                    elif "ubuntu" in distro_id or "debian" in distro_id:
+                        distro_str = f"{distro} (package manager: apt)"
+                    else:
+                        distro_str = distro
+            except Exception:
+                pass
+        if is_wsl:
+            return f"{distro_str} (WSL2 environment on Windows)"
+        return distro_str
+    return platform.platform()
+
 def check_ollama():
     try:
-        req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags", headers={"User-Agent": "Spock/1.0"})
+        req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags", headers={"User-Agent": "Dilix/1.0"})
         with urllib.request.urlopen(req, timeout=1.5) as resp:
             return resp.status == 200
     except Exception:
@@ -311,7 +369,7 @@ def get_terminal_scrollback(lines=30):
 
 def render_box(title: str, content_lines: list):
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}{title}{RESET} {CYAN}" + "─" * 42 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{title}{RESET} {CYAN}" + "─" * 42 + f"{RESET}")
     for line in content_lines:
         print_tty(f"{CYAN}│{RESET} {line}")
     print_tty(f"{CYAN}╰" + "─" * (55) + f"{RESET}")
@@ -423,7 +481,7 @@ def stream_ollama_text(prompt: str, context: list = None) -> (str, list):
         return "".join(full_response), final_context
 
 # ==============================================================================
-# COMANDO: GESTIÓN DE IDIOMA (SPOCK LANG)
+# COMANDO: GESTIÓN DE IDIOMA (DILIX LANG)
 # ==============================================================================
 def handle_lang(args: list):
     cfg = load_config()
@@ -434,12 +492,12 @@ def handle_lang(args: list):
         if target in ("es", "spanish", "español"):
             cfg["lang"] = "es"
             save_config(cfg)
-            print_tty(f"{GREEN}✔ Idioma configurado a Español.{RESET} Spock responderá en español por defecto.")
+            print_tty(f"{GREEN}✔ Idioma configurado a Español.{RESET} Dilix responderá en español por defecto.")
             return
         elif target in ("en", "english", "inglés", "ingles"):
             cfg["lang"] = "en"
             save_config(cfg)
-            print_tty(f"{GREEN}✔ Language configured to English.{RESET} Spock will respond in English by default.")
+            print_tty(f"{GREEN}✔ Language configured to English.{RESET} Dilix will respond in English by default.")
             return
         else:
             print_tty(f"{YELLOW}Opción no reconocida / Unrecognized option: '{target}'. Use 'es' o 'en'.{RESET}")
@@ -447,7 +505,7 @@ def handle_lang(args: list):
 
     # Si se invoca sin argumentos: muestra el estado actual y menú
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}Idioma / Language Settings{RESET} {CYAN}" + "─" * 25 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Idioma / Language Settings{RESET} {CYAN}" + "─" * 25 + f"{RESET}")
     print_tty(f"{CYAN}│{RESET} Idioma actual / Current language: {GREEN}{BOLD}{'English' if current == 'en' else 'Español'}{RESET}")
     print_tty(f"{CYAN}│{RESET} Selecciona una opción para cambiar / Select to change:")
     print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} Español  (Spanish)")
@@ -497,7 +555,7 @@ def handle_explain(args: list):
         code_content = " ".join(args).strip()
         source_label = t("snippet_label")
     else:
-        print_tty(f"{YELLOW}Usage / Uso:{RESET} spock explain <file | 'cmd' | pipe>")
+        print_tty(f"{YELLOW}Usage / Uso:{RESET} dilix explain <file | 'cmd' | pipe>")
         return
 
     if not code_content:
@@ -505,7 +563,7 @@ def handle_explain(args: list):
         return
 
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}{t('box_explain', source=source_label)}{RESET} {CYAN}" + "─" * 20 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_explain', source=source_label)}{RESET} {CYAN}" + "─" * 20 + f"{RESET}")
     print_tty(f"{DIM}{t('processing_explain', model=DEFAULT_MODEL)}{RESET}\n")
 
     if lang == "en":
@@ -570,7 +628,7 @@ def handle_debug(args: list):
         return
 
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}{t('box_debug')}{RESET} {CYAN}" + "─" * 30 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_debug')}{RESET} {CYAN}" + "─" * 30 + f"{RESET}")
     print_tty(f"{DIM}{t('processing_debug')}{RESET}\n")
 
     if lang == "en":
@@ -611,14 +669,17 @@ def handle_fix(last_cmd: str, last_code: str, error_msg: str = ""):
         return
 
     scrollback = error_msg if error_msg else get_terminal_scrollback(25)
-    print_tty(f"{DIM}🖖 Spock {t('processing_fix', model=DEFAULT_MODEL)}{RESET}")
+    print_tty(f"{DIM}✨ Dilix {t('processing_fix', model=DEFAULT_MODEL)}{RESET}")
 
     if lang == "en":
         prompt = f"""{t('persona')}
+Environment Context:
+Operating System: {get_os_info()}
+Current directory: {os.getcwd()}
+
 The following terminal command just failed:
 Command executed: {last_cmd}
 Exit code: {last_code}
-Current directory: {os.getcwd()}
 Terminal output context:
 {scrollback}
 
@@ -631,10 +692,13 @@ Respond ONLY in this valid JSON format:
 }}"""
     else:
         prompt = f"""{t('persona')}
+Contexto del entorno:
+Sistema Operativo: {get_os_info()}
+Directorio actual: {os.getcwd()}
+
 El siguiente comando de terminal acaba de fallar:
 Comando ejecutado: {last_cmd}
 Código de salida (exit code): {last_code}
-Directorio actual: {os.getcwd()}
 Contexto / Salida de terminal:
 {scrollback}
 
@@ -679,11 +743,15 @@ def handle_ask(query: str):
         sys.stdout.write("CANCEL:\n")
         return
 
-    print_tty(f"{DIM}🖖 Spock {t('processing_ask', model=DEFAULT_MODEL)}{RESET}")
+    print_tty(f"{DIM}✨ Dilix {t('processing_ask', model=DEFAULT_MODEL)}{RESET}")
 
     if lang == "en":
         prompt = f"""{t('persona')}
-The user requires an exact terminal command on Mac/Linux for the following task:
+Environment Context:
+Operating System: {get_os_info()}
+Current directory: {os.getcwd()}
+
+The user requires an exact terminal command for the following task:
 Query: {query}
 
 Respond ONLY in this valid JSON format:
@@ -693,7 +761,11 @@ Respond ONLY in this valid JSON format:
 }}"""
     else:
         prompt = f"""{t('persona')}
-El usuario necesita un comando exacto para la siguiente tarea en su terminal Mac/Linux:
+Contexto del entorno:
+Sistema Operativo: {get_os_info()}
+Directorio actual: {os.getcwd()}
+
+El usuario necesita un comando exacto para la siguiente tarea en su terminal:
 Consulta: {query}
 
 Responde ÚNICAMENTE en este formato JSON válido:
@@ -728,7 +800,7 @@ Responde ÚNICAMENTE en este formato JSON válido:
 def handle_chat():
     lang = ensure_language()
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}{t('box_chat')}{RESET} {CYAN}" + "─" * 32 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_chat')}{RESET} {CYAN}" + "─" * 32 + f"{RESET}")
     print_tty(f"{CYAN}│{RESET} {t('chat_welcome_1')}")
     print_tty(f"{CYAN}│{RESET} {t('chat_welcome_2')}")
     print_tty(f"{CYAN}│{RESET} {DIM}{t('chat_welcome_3')} [{lang.upper()}]{RESET}")
@@ -738,17 +810,17 @@ def handle_chat():
 
     while True:
         try:
-            prompt_symbol = f"{MAGENTA}🖖 spock{RESET} {CYAN}❯{RESET} "
+            prompt_symbol = f"{MAGENTA}✨ dilix{RESET} {CYAN}❯{RESET} "
             user_input = input(prompt_symbol).strip()
         except (KeyboardInterrupt, EOFError):
-            print_tty(f"\n{MAGENTA}🖖 Spock:{RESET} {t('chat_session_ended')}")
+            print_tty(f"\n{MAGENTA}✨ Dilix:{RESET} {t('chat_session_ended')}")
             break
 
         if not user_input:
             continue
 
         if user_input.lower() in ("exit", "quit", "q"):
-            print_tty(f"{MAGENTA}🖖 Spock:{RESET} {t('chat_farewell')}")
+            print_tty(f"{MAGENTA}✨ Dilix:{RESET} {t('chat_farewell')}")
             break
 
         if user_input.lower() == "clear":
@@ -764,9 +836,9 @@ def handle_chat():
 The user is interacting with you directly:
 "{user_input}"
 
-Respond in your logical Vulcan character with clarity, precision, and elegance."""
+Respond with clarity, precision, and elegance."""
 
-        print_tty(f"\n{MAGENTA}🖖 Spock:{RESET} ", end="")
+        print_tty(f"\n{MAGENTA}✨ Dilix:{RESET} ", end="")
         _, conversation_context = stream_ollama_text(prompt, context=conversation_context)
         print_tty()
 
@@ -790,7 +862,7 @@ def handle_query(query_parts: list):
         handle_ask(query)
     else:
         print_tty()
-        print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}🖖 Spock{RESET} {CYAN}• {BOLD}{t('box_query')}{RESET} {CYAN}" + "─" * 44 + f"{RESET}\n")
+        print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_query')}{RESET} {CYAN}" + "─" * 44 + f"{RESET}\n")
         prompt = f"""{t('persona')}
 Query / Request:
 {query}
@@ -798,6 +870,158 @@ Query / Request:
 Provide a logically impeccable, technically sharp, and didactic response."""
         stream_ollama_text(prompt)
         print_tty(f"\n{CYAN}╰" + "─" * (65) + f"{RESET}\n")
+
+# ==============================================================================
+# COMANDOS: MENÚ, ESTADO Y AYUDA
+# ==============================================================================
+def handle_status():
+    lang = ensure_language()
+    ollama_ok = check_ollama()
+    status_str = f"{GREEN}Activo y respondiendo / Active{RESET}" if ollama_ok else f"{RED}Inactivo / Offline ({OLLAMA_HOST}){RESET}"
+    os_info = get_os_info()
+    lines = [
+        f"{BOLD}🖥️ Sistema Operativo / OS:{RESET} {CYAN}{os_info}{RESET}",
+        f"{BOLD}🤖 Modelo de IA / Model:{RESET} {CYAN}{DEFAULT_MODEL}{RESET}",
+        f"{BOLD}🔌 Servidor Ollama / Host:{RESET} {status_str}",
+        f"{BOLD}📁 Configuración / Config:{RESET} {CONFIG_FILE}",
+        f"{BOLD}🌐 Idioma actual / Language:{RESET} {GREEN}{lang.upper()}{RESET}",
+    ]
+    render_box("Estado y Configuración / Status", lines)
+
+def handle_help():
+    lang = ensure_language()
+    if lang == "en":
+        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}All Available Commands & Options{RESET} {CYAN}" + "─" * 22 + f"{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Interactive Commands:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix menu{RESET}                 Open interactive control center with all options")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix{RESET}                      Start interactive chat (or fix error if last command failed)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix chat{RESET}                 Open conversational channel with memory")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Code & Troubleshooting:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix explain <file|cmd>{RESET}   Explain code mechanics, architecture, or pipes")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix debug <error|file>{RESET}   Analyze error trace, determine root cause & fix")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix fix{RESET}                  Diagnose and repair the last failed command")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}Ctrl + G{RESET}                   Global hotkey to analyze the last command failure")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Natural Language Queries:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}ask \"<query>\"{RESET}             Suggest terminal command and run or modify it")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix \"<query>\"{RESET}           Answer technical question or suggest command")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Configuration & Settings:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix lang [en|es]{RESET}        View or switch active language")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix model{RESET}                View active model and Ollama status")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix help{RESET}                 Display all available options")
+        print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
+    else:
+        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Todos los Comandos y Opciones Disponibles{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Comandos Interactivos:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix menu{RESET}                 Abre el menú interactivo con todas las opciones")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix{RESET}                      Chat interactivo (o repara si el comando previo falló)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix chat{RESET}                 Abre canal de chat interactivo con memoria")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Código y Solución de Problemas:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix explain <archivo|cmd>{RESET} Explica arquitectura y funcionamiento de código")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix debug <error|archivo>{RESET} Analiza traza de error, causa raíz y solución")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix fix{RESET}                  Diagnostica y soluciona el último comando fallido")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}Ctrl + G{RESET}                   Atajo de teclado para analizar el último error")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Consultas en Lenguaje Natural:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}ask \"<consulta>\"{RESET}          Sugiere comando de terminal y permite ejecutarlo")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix \"<consulta>\"{RESET}        Responde preguntas técnicas o sugiere comandos")
+        print_tty(f"{CYAN}│{RESET}")
+        print_tty(f"{CYAN}│{RESET} {BOLD}Configuración y Ajustes:{RESET}")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix lang [es|en]{RESET}        Ver o cambiar el idioma activo")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix model{RESET}                Ver modelo activo y estado de Ollama")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix help{RESET}                 Muestra todas las opciones disponibles")
+        print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
+
+def handle_menu():
+    lang = ensure_language()
+    while True:
+        print_tty()
+        if lang == "en":
+            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Interactive Control Center & Options{RESET} {CYAN}" + "─" * 17 + f"{RESET}")
+            print_tty(f"{CYAN}│{RESET} Choose an option to execute:")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} 💬  Interactive Chat          (Start conversational channel)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[2]{RESET} 💡  Ask / Command Suggestion   (Generate exact terminal commands)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[3]{RESET} 🛠️  Diagnose & Fix Error       (Inspect last failed command)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[4]{RESET} 📖  Explain Code or File       (Dissect architecture & logic)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[5]{RESET} 🐛  Debug Error or Trace       (Deduce root cause & solutions)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[6]{RESET} 🌐  Language Settings          (Switch between English & Spanish)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[7]{RESET} 🤖  Model & System Status      (Inspect Ollama engine & model)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[8]{RESET} 📋  Help & Cheatsheet          (Print all command syntaxes)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[0]{RESET} 🚪  Exit                       (Return to terminal)")
+            print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}")
+            print_tty(f" {BOLD}Select an option [0-8]:{RESET} ", end="")
+        else:
+            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Centro de Control y Opciones Disponibles{RESET} {CYAN}" + "─" * 12 + f"{RESET}")
+            print_tty(f"{CYAN}│{RESET} Selecciona una opción para ejecutar:")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} 💬  Chat interactivo           (Conversar directamente con Dilix)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[2]{RESET} 💡  Consultar comando          (Generar comandos en lenguaje natural)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[3]{RESET} 🛠️  Diagnosticar último error  (Analizar y reparar último fallo)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[4]{RESET} 📖  Explicar código o archivo  (Analizar arquitectura y código)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[5]{RESET} 🐛  Depurar error o traza      (Deducir causa raíz y corregir)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[6]{RESET} 🌐  Configuración de idioma    (Alternar entre Español e Inglés)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[7]{RESET} 🤖  Modelo y estado del motor  (Ver modelo activo y estado de Ollama)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[8]{RESET} 📋  Ver todos los comandos     (Guía completa de atajos y sintaxis)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[0]{RESET} 🚪  Salir                      (Regresar a la terminal)")
+            print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}")
+            print_tty(f" {BOLD}Selecciona una opción [0-8]:{RESET} ", end="")
+
+        choice = read_key().strip()
+        print_tty()
+
+        if choice in ("0", "q", "Q", "ESC"):
+            break
+        elif choice == "1":
+            handle_chat()
+            break
+        elif choice == "2":
+            prompt_text = "Query / Consulta: " if lang == "en" else "Escribe tu consulta o tarea: "
+            print_tty(f"{CYAN}❯{RESET} {BOLD}{prompt_text}{RESET}", end="")
+            try:
+                q = input().strip()
+                if q:
+                    handle_ask(q)
+            except (KeyboardInterrupt, EOFError):
+                pass
+            break
+        elif choice == "3":
+            handle_fix("", "1", "")
+            break
+        elif choice == "4":
+            prompt_text = "Enter file path or code snippet: " if lang == "en" else "Ruta del archivo o código a explicar: "
+            print_tty(f"{CYAN}❯{RESET} {BOLD}{prompt_text}{RESET}", end="")
+            try:
+                target = input().strip()
+                if target:
+                    handle_explain([target])
+            except (KeyboardInterrupt, EOFError):
+                pass
+            break
+        elif choice == "5":
+            prompt_text = "Enter error message or log file: " if lang == "en" else "Mensaje de error, archivo o traza a depurar: "
+            print_tty(f"{CYAN}❯{RESET} {BOLD}{prompt_text}{RESET}", end="")
+            try:
+                err = input().strip()
+                if err:
+                    handle_debug([err])
+            except (KeyboardInterrupt, EOFError):
+                pass
+            break
+        elif choice == "6":
+            handle_lang([])
+            lang = ensure_language()
+        elif choice == "7":
+            handle_status()
+            print_tty(f"\n{DIM}Presiona cualquier tecla para continuar... / Press any key to continue...{RESET}")
+            read_key()
+        elif choice == "8":
+            handle_help()
+            print_tty(f"\n{DIM}Presiona cualquier tecla para volver al menú... / Press any key to return...{RESET}")
+            read_key()
+        else:
+            print_tty(f"{YELLOW}Opción no válida / Invalid option.{RESET}")
 
 # ==============================================================================
 # ENTRADA PRINCIPAL (CLI)
@@ -810,7 +1034,13 @@ def main():
     command = sys.argv[1].lower()
     args = sys.argv[2:]
 
-    if command in ("lang", "language", "idioma"):
+    if command in ("menu", "options", "opciones"):
+        handle_menu()
+    elif command in ("help", "--help", "-h", "commands", "comandos"):
+        handle_help()
+    elif command in ("model", "models", "status", "info"):
+        handle_status()
+    elif command in ("lang", "language", "idioma"):
         handle_lang(args)
     elif command in ("get-lang", "lang-code"):
         sys.stdout.write(ensure_language() + "\n")
