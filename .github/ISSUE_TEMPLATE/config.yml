@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/dannielnavas/dotfiles/discussions
+    about: Ask general questions, showcase your custom configs, or share ideas.
+  - name: 🌐 Project Website
+    url: https://dilix.danniel.dev
+    about: Visit the official Dilix AI showcase and docs.

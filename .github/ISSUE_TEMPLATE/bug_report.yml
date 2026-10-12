@@ -1,0 +1,65 @@
+name: 🐛 Bug Report
+description: Report a broken script, configuration glitch, or installer error
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please provide as much context as possible so we can diagnose and fix it quickly.
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system and distribution are you running?
+      options:
+        - macOS (Apple Silicon - M1/M2/M3/M4)
+        - macOS (Intel)
+        - CachyOS / Arch Linux
+        - Ubuntu / Debian
+        - Windows 11 - WSL2
+        - Other (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      options:
+        - install.sh (Installer script)
+        - Dilix AI (Ollama / ask / fix / menu)
+        - WezTerm (.wezterm.lua)
+        - Zsh / Shell (.zshrc)
+        - Starship prompt
+        - Fastfetch
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the issue?
+      placeholder: |
+        1. Run './install.sh --macos'
+        2. Execute 'ask "install docker"'
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Output or Logs
+      description: Paste any terminal logs or stack traces here.
+      render: shell

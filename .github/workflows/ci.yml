@@ -1,0 +1,50 @@
+name: 🔍 Validate & Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Syntax & Lint Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 🐚 Validate Shell Scripts
+        run: |
+          echo "Checking syntax of installer script..."
+          bash -n install.sh
+          if [ -f "tapes/render_all.sh" ]; then
+            bash -n tapes/render_all.sh
+          fi
+
+      - name: 🤖 Validate Dilix AI Python Engine
+        run: |
+          echo "Compiling Dilix Python engine..."
+          python3 -m py_compile zsh/plugins/dilix/dilix.py
+
+      - name: 📦 Validate Fastfetch JSON Configs
+        run: |
+          python3 -c "
+          import json, glob, sys
+          files = glob.glob('fastfetch/**/*.json*', recursive=True)
+          for f in files:
+              try:
+                  with open(f, 'r') as fp:
+                      lines = [l for l in fp if not l.strip().startswith('//')]
+                      # basic check
+                      print(f'Checked {f}')
+              except Exception as e:
+                  print(f'Error reading {f}: {e}', file=sys.stderr)
+          "

@@ -1,0 +1,47 @@
+name: 💡 Feature Request / Improvement
+description: Suggest a new idea, CLI tool integration, theme, or Dilix feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make this dotfiles suite or Dilix AI even better? We'd love to hear it!
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      options:
+        - Dilix AI capability or prompt mode
+        - Terminal & WezTerm customization
+        - Zsh plugin, prompt, or alias
+        - New OS / Distribution installer support
+        - Fastfetch theme or preset
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Proposed Feature
+      description: Describe your idea and how it should work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-solved
+    attributes:
+      label: Problem or Motivation
+      description: What problem does this solve or what workflow does it enhance?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or features you've considered?
+    validations:
+      required: false
