@@ -14,15 +14,9 @@ echo "=========================================="
 read -rp "Ingresa una opción [1-3]: " OS_CHOICE
 
 case "$OS_CHOICE" in
-  1)
-    TARGET_OS="macos"
-    ;;
-  2)
-    TARGET_OS="linux"
-    ;;
-  3)
-    TARGET_OS="wsl2"
-    ;;
+  1) TARGET_OS="macos" ;;
+  2) TARGET_OS="linux" ;;
+  3) TARGET_OS="wsl2" ;;
   *)
     echo "❌ Opción no válida. Cancelando instalación."
     exit 1
@@ -35,7 +29,6 @@ echo "➡️ Configurando para: $TARGET_OS..."
 # 1. INSTALACIÓN DE PAQUETES
 # ==============================================================================
 if [ "$TARGET_OS" = "macos" ]; then
-  # Xcode Tools
   if ! xcode-select -p &>/dev/null; then
     echo "📦 Instalando Xcode Command Line Tools..."
     xcode-select --install
@@ -43,7 +36,6 @@ if [ "$TARGET_OS" = "macos" ]; then
     read -r
   fi
 
-  # Homebrew
   if ! command -v brew &>/dev/null; then
     echo "🍺 Instalando Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -76,9 +68,10 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
     git \
     fzf \
     bat \
-    build-essential
+    build-essential \
+    wget \
+    gpg
 
-  # En Debian/Ubuntu bat se instala como 'batcat'
   mkdir -p ~/.local/bin
   ln -sf /usr/bin/batcat ~/.local/bin/bat || true
 
@@ -109,18 +102,12 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
     sudo apt update && sudo apt install -y eza || true
   fi
 
-  # Plugins de Zsh para Ubuntu/Debian
   sudo apt install -y zsh-autosuggestions zsh-syntax-highlighting || true
 
-  # Ollama en Linux/WSL2
+  # Ollama
   if ! command -v ollama &>/dev/null; then
     echo "🤖 Instalando Ollama..."
     curl -fsSL https://ollama.com/install.sh | sh || true
-  fi
-
-  # En WSL2 WezTerm corre en Windows nativo, no dentro de WSL
-  if [ "$TARGET_OS" = "wsl2" ]; then
-    echo "💡 Nota: En WSL2 la interfaz de WezTerm debe instalarse en Windows 11."
   fi
 fi
 
@@ -132,9 +119,25 @@ rm -f ~/.zshrc ~/.wezterm.lua
 
 ln -sf "$DOTFILES_DIR/zsh/.zshrc" ~/.zshrc
 
-# Si es macOS o Linux nativo con interfaz, enlaza wezterm
 if [ "$TARGET_OS" != "wsl2" ]; then
   ln -sf "$DOTFILES_DIR/wezterm/.wezterm.lua" ~/.wezterm.lua
+else
+  # AUTOMATIZACIÓN EN WINDOWS DESDE WSL2:
+  # Detecta el usuario activo de Windows a través del comando cmd.exe
+  WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+  WIN_HOME="/mnt/c/Users/$WIN_USER"
+  DISTRO="${WSL_DISTRO_NAME:-Ubuntu}"
+
+  if [ -d "$WIN_HOME" ]; then
+    echo "🪟 Configurando enlace automático para WezTerm en Windows ($WIN_HOME)..."
+    # Crea el archivo puente en C:\Users\<Usuario>\.wezterm.lua
+    cat << EOF > "$WIN_HOME/.wezterm.lua"
+return dofile([[\\\\wsl.localhost\\$DISTRO\\home\\$USER\\dotfiles\\wezterm\\.wezterm.lua]])
+EOF
+    echo "✅ Archivo .wezterm.lua generado en Windows vinculado a WSL2."
+  else
+    echo "⚠️ No se pudo ubicar $WIN_HOME. Configura el archivo puente en Windows manualmente."
+  fi
 fi
 
 # ==============================================================================
@@ -144,5 +147,4 @@ if command -v zcompile &>/dev/null; then
   zcompile ~/.zshrc || true
 fi
 
-echo "✅ Entorno $TARGET_OS configurado exitosamente. Ejecuta 'exec zsh' para comenzar."
-
+echo "🎉 ¡Instalación completa para $TARGET_OS! Ejecuta 'exec zsh' para comenzar."
