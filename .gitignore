@@ -4,3 +4,5 @@ __pycache__/
 *.py[cod]
 *.zip
 __MACOSX/
+*.tape
+render_all.sh
