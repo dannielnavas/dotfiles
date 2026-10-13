@@ -12,6 +12,7 @@
 [![Prompt - Starship](https://img.shields.io/badge/Prompt-Starship-DD0B78?style=flat-square&logo=starship&logoColor=white)](https://starship.rs)
 [![AI - Dilix Local](https://img.shields.io/badge/AI%20Copilot-Dilix%20(Ollama)-8A2BE2?style=flat-square&logo=ollama&logoColor=white)](https://ollama.com)
 [![Theme - Tokyo Night](https://img.shields.io/badge/Theme-Tokyo%20Night-1a1b26?style=flat-square)](https://github.com/folke/tokyonight.nvim)
+[![Security - VirusTotal](https://img.shields.io/badge/VirusTotal-Clean%20(0%2F93)-0052FF?style=flat-square&logo=virustotal&logoColor=white)](https://www.virustotal.com/gui/url/09df21ef8168be8e4de057db3ce503148c2e0bb15795dc6c328ae2fbd38740b6)
 
 **[🇬🇧 English](#-english)** • **[🇪🇸 Español](#-español)**
 
@@ -180,6 +181,23 @@ You can specify the language and target operating system directly using flags:
 
 ---
 
+### 🛡️ Security & VirusTotal Scan
+
+All dotfiles, installer automation, and Dilix AI scripts in this repository are open, audited, and verified 100% clean:
+
+| Target | Status | Detection Ratio | Scan Report |
+| :--- | :---: | :---: | :--- |
+| **Repository URL** | ✅ Clean | `0 / 93` | [View VirusTotal Report](https://www.virustotal.com/gui/url/09df21ef8168be8e4de057db3ce503148c2e0bb15795dc6c328ae2fbd38740b6) |
+| **`install.sh` Script** | ✅ Clean | `0 / 93` | [View VirusTotal Report](https://www.virustotal.com/gui/url/83482e66d6cbb5e239c1a25ef569e3ccf253fa9516d62fe88d4f70e9203ff4f0) |
+
+- **SHA-256 Checksum (`install.sh`)**:
+  ```bash
+  8453d02ae662de9aeb77048ac31fb6293e7f5c48e2cacfa1934fb7dd2c5b19f1
+  ```
+- **Privacy Guarantee**: Dilix AI executes strictly via your local Ollama instance (`localhost:11434`). No commands, code snippets, or system telemetry are uploaded to external cloud servers.
+
+---
+
 <br />
 
 ---
@@ -342,6 +360,23 @@ Puedes omitir los menús interactivos indicando el idioma y el sistema operativo
 | `z <directorio>` | `zoxide` | Salto rápido a carpetas frecuentes o recientes |
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> | `atuin` | Búsqueda interactiva en el historial de comandos |
 | `reload` | `zsh` | Recarga la configuración del shell al vuelo (`exec zsh`) |
+
+---
+
+### 🛡️ Seguridad y Escaneo en VirusTotal
+
+Todos los scripts de instalación, configuraciones y el motor de Dilix AI son transparentes, auditados y están verificados como 100% limpios de malware y amenazas:
+
+| Objetivo | Estado | Detecciones | Reporte de Análisis |
+| :--- | :---: | :---: | :--- |
+| **URL del Repositorio** | ✅ Limpio | `0 / 93` | [Ver Reporte en VirusTotal](https://www.virustotal.com/gui/url/09df21ef8168be8e4de057db3ce503148c2e0bb15795dc6c328ae2fbd38740b6) |
+| **Script `install.sh`** | ✅ Limpio | `0 / 93` | [Ver Reporte en VirusTotal](https://www.virustotal.com/gui/url/83482e66d6cbb5e239c1a25ef569e3ccf253fa9516d62fe88d4f70e9203ff4f0) |
+
+- **Hash SHA-256 de verificación (`install.sh`)**:
+  ```bash
+  8453d02ae662de9aeb77048ac31fb6293e7f5c48e2cacfa1934fb7dd2c5b19f1
+  ```
+- **Garantía de Privacidad**: Dilix AI funciona exclusivamente con tu instancia local de Ollama (`localhost:11434`). Ningún comando, fragmento de código ni información del sistema sale hacia servicios en la nube de terceros.
 
 ---
 
