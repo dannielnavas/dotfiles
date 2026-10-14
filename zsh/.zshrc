@@ -237,5 +237,3 @@ alias ff-pokemon="fastfetch -c config-macos-pokemon.jsonc"
 if command -v fastfetch &>/dev/null && [[ -o interactive ]] && [[ -t 1 ]]; then
   fastfetch
 fi
-
-
