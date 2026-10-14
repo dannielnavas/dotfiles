@@ -1,4 +1,4 @@
-# ⚡ Modern Dotfiles & Dilix AI Terminal Suite
+# ⚡ Modern Dotfiles & Nacel AI Terminal Suite
 
 <div align="center">
 
@@ -10,7 +10,7 @@
 [![Terminal - WezTerm](https://img.shields.io/badge/WezTerm-GPU%20Accelerated-5856D6?style=flat-square&logo=wezterm&logoColor=white)](https://wezfurlong.org/wezterm/)
 [![Shell - Zsh](https://img.shields.io/badge/Shell-Zsh-F1502F?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.zsh.org/)
 [![Prompt - Starship](https://img.shields.io/badge/Prompt-Starship-DD0B78?style=flat-square&logo=starship&logoColor=white)](https://starship.rs)
-[![AI - Dilix Local](https://img.shields.io/badge/AI%20Copilot-Dilix%20(Ollama)-8A2BE2?style=flat-square&logo=ollama&logoColor=white)](https://ollama.com)
+[![AI - Nacel Local](https://img.shields.io/badge/AI%20Copilot-Nacel%20(Ollama)-8A2BE2?style=flat-square&logo=ollama&logoColor=white)](https://ollama.com)
 [![Theme - Tokyo Night](https://img.shields.io/badge/Theme-Tokyo%20Night-1a1b26?style=flat-square)](https://github.com/folke/tokyonight.nvim)
 [![Security - VirusTotal](https://img.shields.io/badge/VirusTotal-Clean%20(0%2F93)-0052FF?style=flat-square&logo=virustotal&logoColor=white)](https://www.virustotal.com/gui/url/09df21ef8168be8e4de057db3ce503148c2e0bb15795dc6c328ae2fbd38740b6)
 
@@ -23,14 +23,14 @@
 <a name="-english"></a>
 ## 🇬🇧 English
 
-A high-performance, aesthetically crafted dotfiles setup featuring **WezTerm**, **Zsh**, **Starship**, modern CLI replacements, and **Dilix AI** (a local, privacy-first AI terminal assistant powered by Ollama).
+A high-performance, aesthetically crafted dotfiles setup featuring **WezTerm**, **Zsh**, **Starship**, modern CLI replacements, and **Nacel AI** (a local, privacy-first AI terminal assistant powered by Ollama).
 
 Designed with out-of-the-box cross-platform support for **macOS**, **CachyOS / Arch Linux**, **Ubuntu / Debian**, and **Windows 11 (WSL2)**.
 
 ### 🌟 Showcase
 
 <div align="center">
-  <img src="tapes/feature-terminal.gif" alt="Terminal Showcase with Fastfetch & Dilix AI" width="100%" />
+  <img src="tapes/feature-terminal.gif" alt="Terminal Showcase with Fastfetch & Nacel AI" width="100%" />
 </div>
 
 <br />
@@ -39,11 +39,11 @@ Designed with out-of-the-box cross-platform support for **macOS**, **CachyOS / A
 
 | Interactive Natural Language Commands (`ask`) | Command Auto-Fix & Diagnostics (`fix` / `Ctrl+G`) |
 | :---: | :---: |
-| <img src="tapes/hero-ask.gif" alt="Dilix Ask Demo" width="400" /> | <img src="tapes/feature-fix.gif" alt="Dilix Fix Demo" width="400" /> |
+| <img src="tapes/hero-ask.gif" alt="Nacel Ask Demo" width="400" /> | <img src="tapes/feature-fix.gif" alt="Nacel Fix Demo" width="400" /> |
 
-| Command & Feature Menu (`dilix menu`) | Code & Architecture Explainer (`dilix explain`) |
+| Command & Feature Menu (`nacel menu`) | Code & Architecture Explainer (`nacel explain`) |
 | :---: | :---: |
-| <img src="tapes/feature-menu.gif" alt="Dilix Menu Demo" width="400" /> | <img src="tapes/feature-explain.gif" alt="Dilix Explain Demo" width="400" /> |
+| <img src="tapes/feature-menu.gif" alt="Nacel Menu Demo" width="400" /> | <img src="tapes/feature-explain.gif" alt="Nacel Explain Demo" width="400" /> |
 
 </div>
 
@@ -58,13 +58,13 @@ Designed with out-of-the-box cross-platform support for **macOS**, **CachyOS / A
   - Custom status bar showing current workspace, git branches, system battery, and datetime.
   - Seamless WSL2 bridging on Windows environments.
 
-- 🤖 **Dilix AI Copilot**:
-  - Fully local, offline-first AI assistant using Ollama (`qwen2.5-coder:1.5b` by default).
+- 🤖 **Nacel AI Copilot**:
+  - Fully local, offline-first AI assistant using Ollama (`gemma2:2b` by default, configurable).
   - `ask "<query>"`: Translates natural language queries into shell commands with interactive confirmation.
   - `fix` or `Ctrl + G`: Instant root-cause diagnosis and correction for the last failed command.
-  - `dilix explain <file>`: Deep breakdown of code logic, abstractions, and architecture.
-  - `dilix debug <trace/error>`: Analyzes stack traces and anomalous execution logs.
-  - `dilix menu`: Interactive terminal selector with shortcuts.
+  - `nacel explain <file>`: Deep breakdown of code logic, abstractions, and architecture.
+  - `nacel debug <trace/error>`: Analyzes stack traces and anomalous execution logs.
+  - `nacel menu`: Interactive terminal selector with shortcuts.
   - Bilingual interface (switch between English and Spanish on the fly).
 
 - 🐚 **Zsh & Starship**:
@@ -93,7 +93,7 @@ dotfiles/
 ├── wezterm/              # GPU-accelerated terminal configuration (.wezterm.lua)
 ├── zsh/                  # Zsh shell configuration (.zshrc)
 │   └── plugins/
-│       └── dilix/        # Dilix AI core assistant engine, completions & Zsh plugin
+│       └── nacel/        # Nacel AI core assistant engine, completions & Zsh plugin
 └── install.sh            # Automated bilingual installer script
 ```
 
@@ -141,18 +141,18 @@ You can specify the language and target operating system directly using flags:
 
 ### ⌨️ Cheat Sheet & Keybindings
 
-#### Dilix AI Commands
+#### Nacel AI Commands
 
 | Command | Shortcut | Description |
 | :--- | :---: | :--- |
 | `ask "<prompt>"` | — | Translates natural language into commands with interactive execution |
 | `fix` | <kbd>Ctrl</kbd> + <kbd>G</kbd> | Diagnoses and repairs the last failed terminal command |
-| `dilix menu` | — | Interactive selector with all AI features and modes |
-| `dilix` or `dilix chat` | — | Starts an interactive chat conversation session |
-| `dilix explain <file>` | — | Explains code logic, architecture, and syntax |
-| `dilix debug <log/file>` | — | Performs root cause analysis on error messages or logs |
-| `dilix lang [es\|en]` | — | Changes or displays the active language |
-| `dilix model` | — | Checks Ollama status and the active AI model |
+| `nacel menu` | — | Interactive selector with all AI features and modes |
+| `nacel` or `nacel chat` | — | Starts an interactive chat conversation session |
+| `nacel explain <file>` | — | Explains code logic, architecture, and syntax |
+| `nacel debug <log/file>` | — | Performs root cause analysis on error messages or logs |
+| `nacel model [set <m>]` | — | Checks Ollama status and switches the active AI model |
+| `nacel lang [es\|en]` | — | Changes or displays the active language |
 
 #### WezTerm Shortcuts
 
@@ -205,14 +205,14 @@ All dotfiles, installer automation, and Dilix AI scripts in this repository are 
 <a name="-español"></a>
 ## 🇪🇸 Español
 
-Configuración de dotfiles moderna, estética y de alto rendimiento que integra **WezTerm**, **Zsh**, **Starship**, utilidades CLI de última generación y **Dilix AI** (asistente inteligente de terminal, local y privado impulsado por Ollama).
+Configuración de dotfiles moderna, estética y de alto rendimiento que integra **WezTerm**, **Zsh**, **Starship**, utilidades CLI de última generación y **Nacel AI** (asistente inteligente de terminal, local y privado impulsado por Ollama).
 
 Diseñado con soporte nativo y automático para **macOS**, **CachyOS / Arch Linux**, **Ubuntu / Debian** y **Windows 11 (WSL2)**.
 
 ### 🌟 Demostración Visual
 
 <div align="center">
-  <img src="tapes/feature-terminal.gif" alt="Demostración de Terminal con Fastfetch y Dilix AI" width="100%" />
+  <img src="tapes/feature-terminal.gif" alt="Demostración de Terminal con Fastfetch y Nacel AI" width="100%" />
 </div>
 
 <br />
@@ -221,11 +221,11 @@ Diseñado con soporte nativo y automático para **macOS**, **CachyOS / Arch Linu
 
 | Comandos en Lenguaje Natural (`ask`) | Autocorrección y Diagnóstico (`fix` / `Ctrl+G`) |
 | :---: | :---: |
-| <img src="tapes/hero-ask.gif" alt="Demostración de Dilix Ask" width="400" /> | <img src="tapes/feature-fix.gif" alt="Demostración de Dilix Fix" width="400" /> |
+| <img src="tapes/hero-ask.gif" alt="Demostración de Nacel Ask" width="400" /> | <img src="tapes/feature-fix.gif" alt="Demostración de Nacel Fix" width="400" /> |
 
-| Menú de Opciones y Acciones (`dilix menu`) | Explicación de Código y Arquitectura (`dilix explain`) |
+| Menú de Opciones y Acciones (`nacel menu`) | Explicación de Código y Arquitectura (`nacel explain`) |
 | :---: | :---: |
-| <img src="tapes/feature-menu.gif" alt="Demostración de Dilix Menu" width="400" /> | <img src="tapes/feature-explain.gif" alt="Demostración de Dilix Explain" width="400" /> |
+| <img src="tapes/feature-menu.gif" alt="Demostración de Nacel Menu" width="400" /> | <img src="tapes/feature-explain.gif" alt="Demostración de Nacel Explain" width="400" /> |
 
 </div>
 
@@ -240,13 +240,13 @@ Diseñado con soporte nativo y automático para **macOS**, **CachyOS / Arch Linu
   - Barra de estado personalizada con espacio de trabajo actual, ramas de git, nivel de batería y reloj.
   - Enlace automático puente para Windows hacia entornos WSL2.
 
-- 🤖 **Copiloto Dilix AI**:
-  - Asistente de inteligencia artificial 100% local y privado mediante Ollama (`qwen2.5-coder:1.5b`).
+- 🤖 **Copiloto Nacel AI**:
+  - Asistente de inteligencia artificial 100% local y privado mediante Ollama (`gemma2:2b` por defecto, configurable).
   - `ask "<consulta>"`: Traduce consultas en lenguaje cotidiano a comandos de shell con confirmación interactiva.
   - `fix` o `Ctrl + G`: Diagnóstico inmediato de causa raíz y reparación del último comando fallido.
-  - `dilix explain <archivo>`: Desglose conceptual de la lógica, arquitectura y dependencias de código fuente.
-  - `dilix debug <traza/error>`: Análisis de stack traces y registro de errores de consola.
-  - `dilix menu`: Panel interactivo para seleccionar acciones rápidamente.
+  - `nacel explain <archivo>`: Desglose conceptual de la lógica, arquitectura y dependencias de código fuente.
+  - `nacel debug <traza/error>`: Análisis de stack traces y registro de errores de consola.
+  - `nacel menu`: Panel interactivo para seleccionar acciones rápidamente.
   - Soporte bilingüe completo (cambia entre Español e Inglés al instante).
 
 - 🐚 **Zsh y Starship**:
@@ -275,7 +275,7 @@ dotfiles/
 ├── wezterm/              # Configuración de terminal WezTerm (.wezterm.lua)
 ├── zsh/                  # Configuración de shell Zsh (.zshrc)
 │   └── plugins/
-│       └── dilix/        # Motor de Dilix AI, autocompletado y plugin de Zsh
+│       └── nacel/        # Motor de Nacel AI, autocompletado y plugin de Zsh
 └── install.sh            # Script de instalación automatizada bilingüe
 ```
 
@@ -323,18 +323,18 @@ Puedes omitir los menús interactivos indicando el idioma y el sistema operativo
 
 ### ⌨️ Guía Rápida de Atajos y Comandos
 
-#### Comandos de Dilix AI
+#### Comandos de Nacel AI
 
 | Comando | Atajo | Descripción |
 | :--- | :---: | :--- |
 | `ask "<consulta>"` | — | Convierte lenguaje natural en comandos con opción de ejecución directa |
 | `fix` | <kbd>Ctrl</kbd> + <kbd>G</kbd> | Analiza la causa del último error de consola y propone la corrección |
-| `dilix menu` | — | Abre el menú interactivo con todas las funciones de IA |
-| `dilix` o `dilix chat` | — | Abre una sesión de conversación interactiva con el asistente |
-| `dilix explain <archivo>` | — | Explica el funcionamiento y arquitectura del código seleccionado |
-| `dilix debug <archivo/error>` | — | Deduce la anomalía a partir de trazas o salidas de depuración |
-| `dilix lang [es\|en]` | — | Consulta o modifica el idioma activo de Dilix |
-| `dilix model` | — | Muestra el estado del servicio Ollama y el modelo en uso |
+| `nacel menu` | — | Abre el menú interactivo con todas las funciones de IA |
+| `nacel` o `nacel chat` | — | Abre una sesión de conversación interactiva con el asistente |
+| `nacel explain <archivo>` | — | Explica el funcionamiento y arquitectura del código seleccionado |
+| `nacel debug <archivo/error>` | — | Deduce la anomalía a partir de trazas o salidas de depuración |
+| `nacel model [set <m>]` | — | Consulta o modifica el modelo activo de Nacel |
+| `nacel lang [es\|en]` | — | Consulta o modifica el idioma activo de Nacel |
 
 #### Atajos de WezTerm
 
@@ -376,7 +376,7 @@ Todos los scripts de instalación, configuraciones y el motor de Dilix AI son tr
   ```bash
   8453d02ae662de9aeb77048ac31fb6293e7f5c48e2cacfa1934fb7dd2c5b19f1
   ```
-- **Garantía de Privacidad**: Dilix AI funciona exclusivamente con tu instancia local de Ollama (`localhost:11434`). Ningún comando, fragmento de código ni información del sistema sale hacia servicios en la nube de terceros.
+- **Garantía de Privacidad**: Nacel AI funciona exclusivamente con tu instancia local de Ollama (`localhost:11434`). Ningún comando, fragmento de código ni información del sistema sale hacia servicios en la nube de terceros.
 
 ---
 

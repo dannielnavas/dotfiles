@@ -2,8 +2,8 @@
 set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DILIX_MODEL="qwen2.5-coder:1.5b"
-DILIX_CONFIG_DIR="$HOME/.config/dilix"
+NACEL_MODEL="gemma2:2b"
+NACEL_CONFIG_DIR="$HOME/.config/nacel"
 
 # ==============================================================================
 # SELECCIÓN DE IDIOMA / LANGUAGE SELECTION
@@ -19,7 +19,7 @@ for arg in "$@"; do
     --wsl2|--wsl|--windows) TARGET_OS="wsl2" ;;
     --help|-h|--options|--opciones)
       echo "============================================================"
-      echo "  🚀 Dotfiles & Dilix AI - Instalador / Installer"
+      echo "  🚀 Dotfiles & Nacel AI - Instalador / Installer"
       echo "============================================================"
       echo "Uso / Usage: ./install.sh [opciones / options]"
       echo ""
@@ -109,7 +109,7 @@ if [ -z "$TARGET_OS" ]; then
   if [ "$INSTALL_LANG" = "en" ]; then
     echo "=========================================="
     echo "  🚀 Dotfiles & Environment Installer"
-    echo "  ✨ Includes complete Dilix AI suite"
+    echo "  ✨ Includes Nacel AI Terminal Copilot"
     echo "=========================================="
     if [ -n "$DETECTED_NAME" ]; then
       echo "🔍 Detected system: $DETECTED_NAME"
@@ -130,7 +130,7 @@ if [ -z "$TARGET_OS" ]; then
   else
     echo "=========================================="
     echo "  🚀 Instalador de Dotfiles & Entorno"
-    echo "  ✨ Incluye suite completa de Dilix AI"
+    echo "  ✨ Incluye copiloto Nacel AI"
     echo "=========================================="
     if [ -n "$DETECTED_NAME" ]; then
       echo "🔍 Sistema detectado: $DETECTED_NAME"
@@ -369,35 +369,36 @@ elif [ "$TARGET_OS" = "linux" ] || [ "$TARGET_OS" = "wsl2" ]; then
 fi
 
 # ==============================================================================
-# 2. CONFIGURACIÓN E INSTALACIÓN DEL SISTEMA DILIX AI / DILIX AI CONFIGURATION
+# 2. CONFIGURACIÓN E INSTALACIÓN DEL SISTEMA NACEL AI / NACEL AI CONFIGURATION
 # ==============================================================================
 echo ""
 echo "=========================================="
-echo_lang "  ✨ Configurando Sistema Dilix AI" "  ✨ Configuring Dilix AI System"
+echo_lang "  ✨ Configurando Sistema Nacel AI" "  ✨ Configuring Nacel AI System"
 echo "=========================================="
 
-# Permisos ejecutables para el script y plugin de Dilix
-DILIX_SCRIPT_PATH="$DOTFILES_DIR/zsh/plugins/dilix/dilix.py"
-chmod +x "$DILIX_SCRIPT_PATH"
+# Permisos ejecutables para el script y plugin de Nacel
+NACEL_SCRIPT_PATH="$DOTFILES_DIR/zsh/plugins/nacel/nacel.py"
+chmod +x "$NACEL_SCRIPT_PATH"
 
-# Enlace directo en ~/.local/bin/dilix para ejecución global
-ln -sf "$DILIX_SCRIPT_PATH" "$HOME/.local/bin/dilix"
-echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/dilix" "✅ Executable link created: $HOME/.local/bin/dilix"
+# Enlace directo en ~/.local/bin/nacel para ejecución global
+ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/nacel"
+ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/dilix"
+echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/nacel" "✅ Executable link created: $HOME/.local/bin/nacel"
 
-# Configuración persistente e idioma de Dilix
-mkdir -p "$DILIX_CONFIG_DIR"
-CONFIG_FILE="$DILIX_CONFIG_DIR/config.json"
+# Configuración persistente e idioma de Nacel
+mkdir -p "$NACEL_CONFIG_DIR"
+CONFIG_FILE="$NACEL_CONFIG_DIR/config.json"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   if [ "$INSTALL_LANG" = "en" ]; then
-    echo '{"lang": "en"}' > "$CONFIG_FILE"
-    echo "✅ Dilix configured in English (~/.config/dilix/config.json)."
+    echo "{\"lang\": \"en\", \"model\": \"$NACEL_MODEL\"}" > "$CONFIG_FILE"
+    echo "✅ Nacel configured in English (~/.config/nacel/config.json)."
   else
-    echo '{"lang": "es"}' > "$CONFIG_FILE"
-    echo "✅ Dilix configurado en idioma Español (~/.config/dilix/config.json)."
+    echo "{\"lang\": \"es\", \"model\": \"$NACEL_MODEL\"}" > "$CONFIG_FILE"
+    echo "✅ Nacel configurado en idioma Español (~/.config/nacel/config.json)."
   fi
 else
-  echo_lang "ℹ️ Configuración existente de Dilix detectada en $CONFIG_FILE." "ℹ️ Existing Dilix configuration detected at $CONFIG_FILE."
+  echo_lang "ℹ️ Configuración existente de Nacel detectada en $CONFIG_FILE." "ℹ️ Existing Nacel configuration detected at $CONFIG_FILE."
 fi
 
 # Iniciar o verificar el servicio Ollama
@@ -429,15 +430,15 @@ else
   echo_lang "✅ Servicio Ollama ya se encuentra activo." "✅ Ollama service is already active."
 fi
 
-# Descarga y verificación del modelo de IA para Dilix
+# Descarga y verificación del modelo de IA para Nacel
 if command -v ollama &>/dev/null; then
-  echo_lang "🧠 Verificando modelo de IA de Dilix ($DILIX_MODEL)..." "🧠 Checking Dilix AI model ($DILIX_MODEL)..."
-  if ollama list 2>/dev/null | grep -q "$DILIX_MODEL"; then
-    echo_lang "✅ Modelo $DILIX_MODEL ya disponible en Ollama." "✅ Model $DILIX_MODEL already available in Ollama."
+  echo_lang "🧠 Verificando modelo de IA de Nacel ($NACEL_MODEL)..." "🧠 Checking Nacel AI model ($NACEL_MODEL)..."
+  if ollama list 2>/dev/null | grep -q "$NACEL_MODEL"; then
+    echo_lang "✅ Modelo $NACEL_MODEL ya disponible en Ollama." "✅ Model $NACEL_MODEL already available in Ollama."
   else
-    echo_lang "📥 Descargando modelo $DILIX_MODEL para Dilix (esto puede tardar unos minutos según tu conexión)..." "📥 Downloading $DILIX_MODEL model for Dilix (this may take a few minutes depending on your connection)..."
-    ollama pull "$DILIX_MODEL" || {
-      echo_lang "⚠️ No se pudo completar la descarga automática. Ejecuta 'ollama pull $DILIX_MODEL' cuando tengas conexión." "⚠️ Automatic download could not be completed. Run 'ollama pull $DILIX_MODEL' when connected."
+    echo_lang "📥 Descargando modelo $NACEL_MODEL para Nacel (esto puede tardar unos minutos según tu conexión)..." "📥 Downloading $NACEL_MODEL model for Nacel (this may take a few minutes depending on your connection)..."
+    ollama pull "$NACEL_MODEL" || {
+      echo_lang "⚠️ No se pudo completar la descarga automática. Ejecuta 'ollama pull $NACEL_MODEL' cuando tengas conexión." "⚠️ Automatic download could not be completed. Run 'ollama pull $NACEL_MODEL' when connected."
     }
   fi
 fi
@@ -513,31 +514,33 @@ echo ""
 if [ "$INSTALL_LANG" = "en" ]; then
   echo "============================================================"
   echo "  🎉 Installation complete for $TARGET_OS!"
-  echo "  ✨ Dilix system is 100% operational."
+  echo "  ✨ Nacel system is 100% operational."
   echo "============================================================"
-  echo "Available Dilix commands and features:"
-  echo "  • dilix                    -> Open interactive chat session"
-  echo "  • dilix \"<query>\"          -> Suggest commands or answer questions"
+  echo "Available Nacel commands and features:"
+  echo "  • nacel                    -> Open interactive chat session"
+  echo "  • nacel \"<query>\"          -> Suggest commands or answer questions"
   echo "  • ask \"<query>\"            -> Suggest commands and run them interactively"
   echo "  • fix  (or Ctrl + G)       -> Diagnose and fix the last command error"
-  echo "  • dilix explain <file>     -> Explain code architecture and logic"
-  echo "  • dilix debug <error>      -> Deduce root cause and anomalies"
-  echo "  • dilix lang [es|en]       -> Change language anytime"
+  echo "  • nacel explain <file>     -> Explain code architecture and logic"
+  echo "  • nacel debug <error>      -> Deduce root cause and anomalies"
+  echo "  • nacel model set <name>   -> Change AI model (e.g. gemma2:2b)"
+  echo "  • nacel lang [es|en]       -> Change language anytime"
   echo "============================================================"
   echo "Run 'exec zsh' or restart your terminal to begin."
 else
   echo "============================================================"
   echo "  🎉 ¡Instalación completa para $TARGET_OS!"
-  echo "  ✨ El sistema Dilix está 100% operativo."
+  echo "  ✨ El sistema Nacel está 100% operativo."
   echo "============================================================"
-  echo "Comandos y funciones de Dilix disponibles:"
-  echo "  • dilix                    -> Abre el canal de chat interactivo"
-  echo "  • dilix \"<consulta>\"       -> Sugiere comandos o resuelve dudas"
+  echo "Comandos y funciones de Nacel disponibles:"
+  echo "  • nacel                    -> Abre el canal de chat interactivo"
+  echo "  • nacel \"<consulta>\"       -> Sugiere comandos o resuelve dudas"
   echo "  • ask \"<consulta>\"         -> Sugiere comandos y permite ejecutarlos"
   echo "  • fix  (o Ctrl + G)        -> Diagnostica y corrige el último error"
-  echo "  • dilix explain <archivo>  -> Explica arquitectura y código"
-  echo "  • dilix debug <error>      -> Deduce causa raíz y anomalías"
-  echo "  • dilix lang [es|en]       -> Cambia el idioma en cualquier momento"
+  echo "  • nacel explain <archivo>  -> Explica arquitectura y código"
+  echo "  • nacel debug <error>      -> Deduce causa raíz y anomalías"
+  echo "  • nacel model set <nombre> -> Cambia el modelo (ej: gemma2:2b)"
+  echo "  • nacel lang [es|en]       -> Cambia el idioma en cualquier momento"
   echo "============================================================"
   echo "Ejecuta 'exec zsh' o reinicia tu terminal para comenzar."
 fi

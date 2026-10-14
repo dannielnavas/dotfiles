@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Dilix - Asistente Lógico de Terminal y Copiloto de Programación para Zsh.
+Nacel - Asistente Lógico de Terminal y Copiloto de Programación para Zsh & Bash.
 Soporte Bilingüe: Español (es) & Inglés (en).
-Configuración persistente en ~/.config/dilix/config.json.
+Configuración persistente en ~/.config/nacel/config.json.
 """
 
 import sys
@@ -22,10 +22,7 @@ except ImportError:
 # ==============================================================================
 # CONFIGURACIÓN Y CONSTANTES
 # ==============================================================================
-DEFAULT_MODEL = os.environ.get("DILIX_MODEL", "qwen2.5-coder:1.5b")
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-
-CONFIG_DIR = os.path.expanduser("~/.config/dilix")
+CONFIG_DIR = os.path.expanduser("~/.config/nacel")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 
 # Códigos de Color ANSI
@@ -46,7 +43,7 @@ RESET = "\033[0m"
 TEXTS = {
     "es": {
         "persona": (
-            "Eres Dilix, un asistente inteligente de terminal, copiloto de programación y experto en ingeniería de software multiplataforma (con soporte de primera clase para WSL2, CachyOS / Arch Linux, Ubuntu / Debian y macOS).\n"
+            "Eres Nacel, un asistente inteligente de terminal, copiloto de programación y experto en ingeniería de software multiplataforma (con soporte de primera clase para WSL2, CachyOS / Arch Linux, Ubuntu / Debian y macOS).\n"
             "Directrices de entorno:\n"
             "- Identifica y adapta tus respuestas según el sistema operativo del usuario.\n"
             "- En macOS: aprovecha Homebrew (brew), launchctl, pbcopy y utilidades de Apple Silicon / Intel.\n"
@@ -63,8 +60,8 @@ TEXTS = {
         "box_ask": "Sugerencia de Comando",
         "box_chat": "Canal de Comunicación Directo",
         "box_query": "Análisis Lógico",
-        "chat_welcome_1": "Dilix a su servicio.",
-        "chat_welcome_2": "Puedo explicar código, depurar errores y analizar lógica de sistemas.",
+        "chat_welcome_1": "Nacel a su servicio.",
+        "chat_welcome_2": "Puedo explicar código, depurar errores y sugerir comandos de terminal.",
         "chat_welcome_3": "Escribe 'q' o 'exit' para salir, 'clear' para limpiar pantalla.",
         "chat_farewell": "Sesión finalizada. ¡Hasta pronto!",
         "chat_session_ended": "Sesión finalizada. ¡Hasta pronto!",
@@ -95,7 +92,7 @@ TEXTS = {
     },
     "en": {
         "persona": (
-            "You are Dilix, an intelligent terminal assistant, coding copilot, and expert software engineer across platforms (with first-class support for WSL2, CachyOS / Arch Linux, Ubuntu / Debian, and macOS).\n"
+            "You are Nacel, an intelligent terminal assistant, coding copilot, and expert software engineer across platforms (with first-class support for WSL2, CachyOS / Arch Linux, Ubuntu / Debian, and macOS).\n"
             "Environment guidelines:\n"
             "- Identify and tailor your recommendations to the user's specific OS environment.\n"
             "- On macOS: utilize Homebrew (brew), launchctl, pbcopy, and Apple Silicon / Intel paths.\n"
@@ -112,8 +109,8 @@ TEXTS = {
         "box_ask": "Command Suggestion",
         "box_chat": "Direct Communication Channel",
         "box_query": "Logical Analysis",
-        "chat_welcome_1": "Dilix at your service.",
-        "chat_welcome_2": "I can explain code, debug errors, and analyze system logic.",
+        "chat_welcome_1": "Nacel at your service.",
+        "chat_welcome_2": "I can explain code, debug errors, and suggest terminal commands.",
         "chat_welcome_3": "Type 'q' or 'exit' to quit, 'clear' to clear screen.",
         "chat_farewell": "Session ended. See you soon!",
         "chat_session_ended": "Session ended. See you soon!",
@@ -145,7 +142,7 @@ TEXTS = {
 }
 
 # ==============================================================================
-# GESTIÓN DE CONFIGURACIÓN Y PERSISTENCIA DE IDIOMA
+# GESTIÓN DE CONFIGURACIÓN Y MODELO
 # ==============================================================================
 def load_config() -> dict:
     if os.path.isfile(CONFIG_FILE):
@@ -164,9 +161,26 @@ def save_config(cfg: dict):
     except Exception as e:
         print_tty(f"{YELLOW}⚠️ No se pudo guardar configuración: {e}{RESET}")
 
+def get_current_model() -> str:
+    """Prioridad: NACEL_MODEL > config.json['model'] > DILIX_MODEL > gemma2:2b."""
+    env_model = os.environ.get("NACEL_MODEL", "").strip()
+    if env_model:
+        return env_model
+    cfg = load_config()
+    cfg_model = cfg.get("model", "").strip()
+    if cfg_model:
+        return cfg_model
+    legacy_model = os.environ.get("DILIX_MODEL", "").strip()
+    if legacy_model:
+        return legacy_model
+    return "gemma2:2b"
+
+def get_ollama_host() -> str:
+    return os.environ.get("NACEL_HOST", os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
+
 def get_current_language() -> str:
-    """Obtiene el idioma activo: prioridad variable de entorno DILIX_LANG > config.json."""
-    env_lang = os.environ.get("DILIX_LANG", "").lower().strip()
+    """Obtiene el idioma activo: prioridad NACEL_LANG > DILIX_LANG > config.json."""
+    env_lang = os.environ.get("NACEL_LANG", os.environ.get("DILIX_LANG", "")).lower().strip()
     if env_lang in ("es", "en"):
         return env_lang
     cfg = load_config()
@@ -181,41 +195,44 @@ def ensure_language() -> str:
     if lang:
         return lang
 
-    # Menú de selección inicial
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Configuración de Idioma / Language Setup{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
-    print_tty(f"{CYAN}│{RESET} Por favor seleccione su idioma preferido:")
-    print_tty(f"{CYAN}│{RESET} Please select your preferred language:")
-    print_tty(f"{CYAN}│{RESET}   {GREEN}[1]{RESET} Español  (Spanish)")
-    print_tty(f"{CYAN}│{RESET}   {GREEN}[2]{RESET} English  (Inglés)")
-    print_tty(f"{CYAN}╰" + "─" * 60 + f"{RESET}")
-    print_tty(f" {BOLD}Opción / Choice [1/2]:{RESET} ", end="")
-    
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}Configuración Inicial / Initial Setup{RESET} {CYAN}" + "─" * 16 + f"{RESET}")
+    print_tty(f"{CYAN}│{RESET} Selecciona tu idioma preferido / Select your preferred language:")
+    print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} Español  (Spanish - Predeterminado)")
+    print_tty(f"{CYAN}│{RESET}   {CYAN}[2]{RESET} English  (Inglés)")
+    print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}")
+    print_tty(f" {BOLD}Opción / Choice [1/2] (Enter para Español):{RESET} ", end="")
+
     choice = read_key().strip()
     print_tty()
 
-    selected = "en" if choice in ("2", "en", "e", "E") else "es"
+    selected = "en" if choice in ("2", "en", "english") else "es"
+
     cfg = load_config()
     cfg["lang"] = selected
+    if "model" not in cfg:
+        cfg["model"] = "gemma2:2b"
     save_config(cfg)
 
     if selected == "en":
-        print_tty(f" {GREEN}✔ Language configured to English.{RESET} Saved as default in ~/.config/dilix/config.json\n")
+        print_tty(f" {GREEN}✔ Language configured to English.{RESET} Saved in ~/.config/nacel/config.json\n")
     else:
-        print_tty(f" {GREEN}✔ Idioma configurado a Español.{RESET} Guardado como predeterminado en ~/.config/dilix/config.json\n")
+        print_tty(f" {GREEN}✔ Idioma configurado a Español.{RESET} Guardado en ~/.config/nacel/config.json\n")
+
     return selected
 
 def t(key: str, **kwargs) -> str:
-    """Obtiene una cadena de texto localizada según el idioma actual."""
-    lang = ensure_language()
-    bundle = TEXTS.get(lang, TEXTS["es"])
-    template = bundle.get(key, TEXTS["es"].get(key, key))
+    lang = get_current_language() or "es"
+    text = TEXTS.get(lang, TEXTS["es"]).get(key, TEXTS["es"].get(key, key))
     if kwargs:
-        return template.format(**kwargs)
-    return template
+        try:
+            return text.format(**kwargs)
+        except Exception:
+            return text
+    return text
 
 # ==============================================================================
-# UTILIDADES DE TERMINAL Y E/S
+# ENTORNO Y TERMINAL UTILITIES
 # ==============================================================================
 def print_tty(msg="", end="\n"):
     try:
@@ -346,15 +363,24 @@ def get_os_info() -> str:
         return distro_str
     return platform.platform()
 
-def check_ollama():
+def check_ollama() -> bool:
+    host = get_ollama_host()
     try:
-        req = urllib.request.Request(f"{OLLAMA_HOST}/api/tags", headers={"User-Agent": "Dilix/1.0"})
+        req = urllib.request.Request(f"{host}/api/tags", headers={"User-Agent": "Nacel/1.0"})
         with urllib.request.urlopen(req, timeout=1.5) as resp:
             return resp.status == 200
     except Exception:
         return False
 
-def get_terminal_scrollback(lines=30):
+def get_terminal_scrollback(lines=30) -> str:
+    """
+    Captura de scrollback inteligente multiplataforma:
+    1. WezTerm nativo (macOS/Linux)
+    2. WezTerm en WSL2 (wezterm.exe)
+    3. Tmux capture-pane
+    4. Kitty get-text
+    """
+    # 1. WezTerm nativo
     try:
         res = subprocess.run(
             ["wezterm", "cli", "get-text", "--start-line", f"-{lines}"],
@@ -362,17 +388,56 @@ def get_terminal_scrollback(lines=30):
         )
         if res.returncode == 0 and res.stdout.strip():
             raw_lines = [l.strip() for l in res.stdout.splitlines() if l.strip()]
-            return "\n".join(raw_lines[-18:])
+            return "\n".join(raw_lines[-20:])
     except Exception:
         pass
+
+    # 2. WezTerm en WSL2 (interoperabilidad con Windows)
+    try:
+        res = subprocess.run(
+            ["wezterm.exe", "cli", "get-text", "--start-line", f"-{lines}"],
+            capture_output=True, text=True, timeout=1
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            raw_lines = [l.strip() for l in res.stdout.splitlines() if l.strip()]
+            return "\n".join(raw_lines[-20:])
+    except Exception:
+        pass
+
+    # 3. Tmux
+    if os.environ.get("TMUX"):
+        try:
+            res = subprocess.run(
+                ["tmux", "capture-pane", "-p", "-S", f"-{lines}"],
+                capture_output=True, text=True, timeout=1
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                raw_lines = [l.strip() for l in res.stdout.splitlines() if l.strip()]
+                return "\n".join(raw_lines[-20:])
+        except Exception:
+            pass
+
+    # 4. Kitty
+    if os.environ.get("KITTY_PID"):
+        try:
+            res = subprocess.run(
+                ["kitty", "@", "get-text", "--extent", "screen"],
+                capture_output=True, text=True, timeout=1
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                raw_lines = [l.strip() for l in res.stdout.splitlines() if l.strip()]
+                return "\n".join(raw_lines[-20:])
+        except Exception:
+            pass
+
     return ""
 
 def render_box(title: str, content_lines: list):
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{title}{RESET} {CYAN}" + "─" * 42 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}{title}{RESET} {CYAN}" + "─" * 42 + f"{RESET}")
     for line in content_lines:
         print_tty(f"{CYAN}│{RESET} {line}")
-    print_tty(f"{CYAN}╰" + "─" * (55) + f"{RESET}")
+    print_tty(f"{CYAN}╰" + "─" * 55 + f"{RESET}")
 
 def interactive_menu(command: str):
     while True:
@@ -409,14 +474,16 @@ def interactive_menu(command: str):
 # CLIENTE OLLAMA
 # ==============================================================================
 def query_ollama_json(prompt: str) -> dict:
+    host = get_ollama_host()
+    model = get_current_model()
     if not check_ollama():
         return {
             "error": "OLLAMA_OFFLINE",
-            "message": t("ollama_offline", host=OLLAMA_HOST)
+            "message": t("ollama_offline", host=host)
         }
 
     payload = {
-        "model": DEFAULT_MODEL,
+        "model": model,
         "prompt": prompt,
         "stream": False,
         "format": "json",
@@ -425,7 +492,7 @@ def query_ollama_json(prompt: str) -> dict:
 
     try:
         req = urllib.request.Request(
-            f"{OLLAMA_HOST}/api/generate",
+            f"{host}/api/generate",
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
@@ -443,12 +510,14 @@ def query_ollama_json(prompt: str) -> dict:
         return {"error": "API_ERROR", "message": str(e)}
 
 def stream_ollama_text(prompt: str, context: list = None) -> (str, list):
+    host = get_ollama_host()
+    model = get_current_model()
     if not check_ollama():
-        print_tty(f"{RED}❌ Error: {t('ollama_offline', host=OLLAMA_HOST)}{RESET}")
+        print_tty(f"{RED}❌ Error: {t('ollama_offline', host=host)}{RESET}")
         return "", context
 
     payload = {
-        "model": DEFAULT_MODEL,
+        "model": model,
         "prompt": prompt,
         "stream": True,
         "options": {"temperature": 0.3}
@@ -461,7 +530,7 @@ def stream_ollama_text(prompt: str, context: list = None) -> (str, list):
 
     try:
         req = urllib.request.Request(
-            f"{OLLAMA_HOST}/api/generate",
+            f"{host}/api/generate",
             data=json.dumps(payload).encode("utf-8"),
             headers={"Content-Type": "application/json"}
         )
@@ -481,7 +550,7 @@ def stream_ollama_text(prompt: str, context: list = None) -> (str, list):
         return "".join(full_response), final_context
 
 # ==============================================================================
-# COMANDO: GESTIÓN DE IDIOMA (DILIX LANG)
+# COMANDOS: IDIOMA Y MODELO
 # ==============================================================================
 def handle_lang(args: list):
     cfg = load_config()
@@ -492,20 +561,19 @@ def handle_lang(args: list):
         if target in ("es", "spanish", "español"):
             cfg["lang"] = "es"
             save_config(cfg)
-            print_tty(f"{GREEN}✔ Idioma configurado a Español.{RESET} Dilix responderá en español por defecto.")
+            print_tty(f"{GREEN}✔ Idioma configurado a Español.{RESET} Nacel responderá en español.")
             return
         elif target in ("en", "english", "inglés", "ingles"):
             cfg["lang"] = "en"
             save_config(cfg)
-            print_tty(f"{GREEN}✔ Language configured to English.{RESET} Dilix will respond in English by default.")
+            print_tty(f"{GREEN}✔ Language configured to English.{RESET} Nacel will respond in English.")
             return
         else:
-            print_tty(f"{YELLOW}Opción no reconocida / Unrecognized option: '{target}'. Use 'es' o 'en'.{RESET}")
+            print_tty(f"{YELLOW}Opción no reconocida: '{target}'. Use 'es' o 'en'.{RESET}")
             return
 
-    # Si se invoca sin argumentos: muestra el estado actual y menú
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Idioma / Language Settings{RESET} {CYAN}" + "─" * 25 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}Idioma / Language Settings{RESET} {CYAN}" + "─" * 25 + f"{RESET}")
     print_tty(f"{CYAN}│{RESET} Idioma actual / Current language: {GREEN}{BOLD}{'English' if current == 'en' else 'Español'}{RESET}")
     print_tty(f"{CYAN}│{RESET} Selecciona una opción para cambiar / Select to change:")
     print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} Español  (Spanish)")
@@ -526,11 +594,38 @@ def handle_lang(args: list):
     else:
         print_tty(f"{DIM}Sin cambios / No changes made.{RESET}")
 
+def handle_model(args: list):
+    cfg = load_config()
+
+    if len(args) >= 2 and args[0].lower() in ("set", "use"):
+        new_model = args[1].strip()
+        cfg["model"] = new_model
+        save_config(cfg)
+        print_tty(f"{GREEN}✔ Modelo establecido a:{RESET} {CYAN}{BOLD}{new_model}{RESET}")
+        print_tty(f"{DIM}Guardado en ~/.config/nacel/config.json{RESET}")
+        return
+
+    # Si se pasa un argumento directo como modelo (ej: nacel model gemma2:2b)
+    if len(args) == 1 and args[0].lower() not in ("list", "status"):
+        new_model = args[0].strip()
+        cfg["model"] = new_model
+        save_config(cfg)
+        print_tty(f"{GREEN}✔ Modelo establecido a:{RESET} {CYAN}{BOLD}{new_model}{RESET}")
+        return
+
+    handle_status()
+    print_tty(f"\n{BOLD}💡 Modelos recomendados para Nacel:{RESET}")
+    print_tty(f"  • {GREEN}gemma2:2b{RESET}         -> Ultraligero, rápido y excelente en conversación/español")
+    print_tty(f"  • {GREEN}qwen2.5-coder:7b{RESET}  -> El mejor copiloto de programación y comandos terminal")
+    print_tty(f"  • {GREEN}qwen2.5-coder:1.5b{RESET}-> Mínimo consumo de recursos (~1GB VRAM)")
+    print_tty(f"\n{DIM}Para cambiar de modelo ejecuta: nacel model set <nombre_del_modelo>{RESET}")
+
 # ==============================================================================
-# FUNCIONALIDADES PRINCIPALES
+# FUNCIONALIDADES PRINCIPALES (EXPLAIN, DEBUG, FIX, ASK, CHAT)
 # ==============================================================================
 def handle_explain(args: list):
     lang = ensure_language()
+    model = get_current_model()
     code_content = ""
     source_label = ""
 
@@ -555,7 +650,7 @@ def handle_explain(args: list):
         code_content = " ".join(args).strip()
         source_label = t("snippet_label")
     else:
-        print_tty(f"{YELLOW}Usage / Uso:{RESET} dilix explain <file | 'cmd' | pipe>")
+        print_tty(f"{YELLOW}Uso / Usage:{RESET} nacel explain <archivo | 'comando' | pipe>")
         return
 
     if not code_content:
@@ -563,8 +658,8 @@ def handle_explain(args: list):
         return
 
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_explain', source=source_label)}{RESET} {CYAN}" + "─" * 20 + f"{RESET}")
-    print_tty(f"{DIM}{t('processing_explain', model=DEFAULT_MODEL)}{RESET}\n")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}{t('box_explain', source=source_label)}{RESET} {CYAN}" + "─" * 20 + f"{RESET}")
+    print_tty(f"{DIM}{t('processing_explain', model=model)}{RESET}\n")
 
     if lang == "en":
         prompt = f"""{t('persona')}
@@ -580,7 +675,7 @@ Structure your response:
 2. **Execution Flow & Mechanics**: (step-by-step breakdown of internal mechanics).
 3. **Critical Evaluation**: (algorithmic efficiency, edge cases, vulnerabilities, or improvements).
 
-Maintain your composed, sharp Vulcan demeanor."""
+Maintain your composed, sharp analytical demeanor."""
     else:
         prompt = f"""{t('persona')}
 Disecciona y explica el siguiente código o comando con rigor analítico.
@@ -595,7 +690,7 @@ Estructura tu respuesta exactamente así:
 2. **Flujo de Ejecución y Mecánica Interna**: (desglose paso a paso de los componentes clave).
 3. **Evaluación Crítica**: (eficiencia algorítmica, casos borde, vulnerabilidades o mejoras si las hay).
 
-Mantén tu tono vulcaniano: sobrio, impecable y directo al grano."""
+Mantén tu tono sobrio, impecable y directo al grano."""
 
     stream_ollama_text(prompt)
     print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
@@ -628,7 +723,7 @@ def handle_debug(args: list):
         return
 
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_debug')}{RESET} {CYAN}" + "─" * 30 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}{t('box_debug')}{RESET} {CYAN}" + "─" * 30 + f"{RESET}")
     print_tty(f"{DIM}{t('processing_debug')}{RESET}\n")
 
     if lang == "en":
@@ -663,13 +758,14 @@ Sé analítico, preciso y no uses rodeos."""
 
 def handle_fix(last_cmd: str, last_code: str, error_msg: str = ""):
     lang = ensure_language()
+    model = get_current_model()
     if not last_cmd.strip():
         print_tty(f"{YELLOW}{t('no_error_found')}{RESET}")
         sys.stdout.write("CANCEL:\n")
         return
 
-    scrollback = error_msg if error_msg else get_terminal_scrollback(25)
-    print_tty(f"{DIM}✨ Dilix {t('processing_fix', model=DEFAULT_MODEL)}{RESET}")
+    scrollback = error_msg.strip() if error_msg.strip() else get_terminal_scrollback(25)
+    print_tty(f"{DIM}✨ Nacel {t('processing_fix', model=model)}{RESET}")
 
     if lang == "en":
         prompt = f"""{t('persona')}
@@ -680,7 +776,7 @@ Current directory: {os.getcwd()}
 The following terminal command just failed:
 Command executed: {last_cmd}
 Exit code: {last_code}
-Terminal output context:
+Terminal output / error trace context:
 {scrollback}
 
 Analyze the logical cause of failure and formulate the exact correction.
@@ -699,7 +795,7 @@ Directorio actual: {os.getcwd()}
 El siguiente comando de terminal acaba de fallar:
 Comando ejecutado: {last_cmd}
 Código de salida (exit code): {last_code}
-Contexto / Salida de terminal:
+Contexto / Salida de error de terminal:
 {scrollback}
 
 Analiza la causa lógica del fallo y formula la corrección exacta.
@@ -738,12 +834,13 @@ Responde ÚNICAMENTE en este formato JSON válido:
 
 def handle_ask(query: str):
     lang = ensure_language()
+    model = get_current_model()
     if not query.strip():
-        print_tty(f"{YELLOW}Usage: ask \"query\" / Uso: ask \"consulta\"{RESET}")
+        print_tty(f"{YELLOW}Uso: ask \"consulta\" / Usage: ask \"query\"{RESET}")
         sys.stdout.write("CANCEL:\n")
         return
 
-    print_tty(f"{DIM}✨ Dilix {t('processing_ask', model=DEFAULT_MODEL)}{RESET}")
+    print_tty(f"{DIM}✨ Nacel {t('processing_ask', model=model)}{RESET}")
 
     if lang == "en":
         prompt = f"""{t('persona')}
@@ -799,28 +896,29 @@ Responde ÚNICAMENTE en este formato JSON válido:
 
 def handle_chat():
     lang = ensure_language()
+    model = get_current_model()
     print_tty()
-    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_chat')}{RESET} {CYAN}" + "─" * 32 + f"{RESET}")
+    print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}{t('box_chat')}{RESET} {CYAN}" + "─" * 32 + f"{RESET}")
     print_tty(f"{CYAN}│{RESET} {t('chat_welcome_1')}")
     print_tty(f"{CYAN}│{RESET} {t('chat_welcome_2')}")
-    print_tty(f"{CYAN}│{RESET} {DIM}{t('chat_welcome_3')} [{lang.upper()}]{RESET}")
-    print_tty(f"{CYAN}╰" + "─" * (65) + f"{RESET}\n")
+    print_tty(f"{CYAN}│{RESET} {DIM}{t('chat_welcome_3')} [{lang.upper()} • {model}]{RESET}")
+    print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
 
     conversation_context = None
 
     while True:
         try:
-            prompt_symbol = f"{MAGENTA}✨ dilix{RESET} {CYAN}❯{RESET} "
+            prompt_symbol = f"{MAGENTA}✨ nacel{RESET} {CYAN}❯{RESET} "
             user_input = input(prompt_symbol).strip()
         except (KeyboardInterrupt, EOFError):
-            print_tty(f"\n{MAGENTA}✨ Dilix:{RESET} {t('chat_session_ended')}")
+            print_tty(f"\n{MAGENTA}✨ Nacel:{RESET} {t('chat_session_ended')}")
             break
 
         if not user_input:
             continue
 
         if user_input.lower() in ("exit", "quit", "q"):
-            print_tty(f"{MAGENTA}✨ Dilix:{RESET} {t('chat_farewell')}")
+            print_tty(f"{MAGENTA}✨ Nacel:{RESET} {t('chat_farewell')}")
             break
 
         if user_input.lower() == "clear":
@@ -838,7 +936,7 @@ The user is interacting with you directly:
 
 Respond with clarity, precision, and elegance."""
 
-        print_tty(f"\n{MAGENTA}✨ Dilix:{RESET} ", end="")
+        print_tty(f"\n{MAGENTA}✨ Nacel:{RESET} ", end="")
         _, conversation_context = stream_ollama_text(prompt, context=conversation_context)
         print_tty()
 
@@ -862,14 +960,14 @@ def handle_query(query_parts: list):
         handle_ask(query)
     else:
         print_tty()
-        print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}{t('box_query')}{RESET} {CYAN}" + "─" * 44 + f"{RESET}\n")
+        print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}{t('box_query')}{RESET} {CYAN}" + "─" * 44 + f"{RESET}\n")
         prompt = f"""{t('persona')}
 Query / Request:
 {query}
 
 Provide a logically impeccable, technically sharp, and didactic response."""
         stream_ollama_text(prompt)
-        print_tty(f"\n{CYAN}╰" + "─" * (65) + f"{RESET}\n")
+        print_tty(f"\n{CYAN}╰" + "─" * 65 + f"{RESET}\n")
 
 # ==============================================================================
 # COMANDOS: MENÚ, ESTADO Y AYUDA
@@ -877,11 +975,13 @@ Provide a logically impeccable, technically sharp, and didactic response."""
 def handle_status():
     lang = ensure_language()
     ollama_ok = check_ollama()
-    status_str = f"{GREEN}Activo y respondiendo / Active{RESET}" if ollama_ok else f"{RED}Inactivo / Offline ({OLLAMA_HOST}){RESET}"
+    host = get_ollama_host()
+    model = get_current_model()
+    status_str = f"{GREEN}Activo y respondiendo / Active{RESET}" if ollama_ok else f"{RED}Inactivo / Offline ({host}){RESET}"
     os_info = get_os_info()
     lines = [
         f"{BOLD}🖥️ Sistema Operativo / OS:{RESET} {CYAN}{os_info}{RESET}",
-        f"{BOLD}🤖 Modelo de IA / Model:{RESET} {CYAN}{DEFAULT_MODEL}{RESET}",
+        f"{BOLD}🤖 Modelo de IA / Model:{RESET} {CYAN}{model}{RESET}",
         f"{BOLD}🔌 Servidor Ollama / Host:{RESET} {status_str}",
         f"{BOLD}📁 Configuración / Config:{RESET} {CONFIG_FILE}",
         f"{BOLD}🌐 Idioma actual / Language:{RESET} {GREEN}{lang.upper()}{RESET}",
@@ -891,48 +991,48 @@ def handle_status():
 def handle_help():
     lang = ensure_language()
     if lang == "en":
-        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}All Available Commands & Options{RESET} {CYAN}" + "─" * 22 + f"{RESET}")
+        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}All Available Commands & Options{RESET} {CYAN}" + "─" * 22 + f"{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Interactive Commands:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix menu{RESET}                 Open interactive control center with all options")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix{RESET}                      Start interactive chat (or fix error if last command failed)")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix chat{RESET}                 Open conversational channel with memory")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel menu{RESET}                 Open interactive control center with all options")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel{RESET}                      Start interactive chat (or fix error if last command failed)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel chat{RESET}                 Open conversational channel with memory")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Code & Troubleshooting:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix explain <file|cmd>{RESET}   Explain code mechanics, architecture, or pipes")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix debug <error|file>{RESET}   Analyze error trace, determine root cause & fix")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix fix{RESET}                  Diagnose and repair the last failed command")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel explain <file|cmd>{RESET}   Explain code mechanics, architecture, or pipes")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel debug <error|file>{RESET}   Analyze error trace, determine root cause & fix")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel fix{RESET}                  Diagnose and repair the last failed command")
         print_tty(f"{CYAN}│{RESET}   {GREEN}Ctrl + G{RESET}                   Global hotkey to analyze the last command failure")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Natural Language Queries:{RESET}")
         print_tty(f"{CYAN}│{RESET}   {GREEN}ask \"<query>\"{RESET}             Suggest terminal command and run or modify it")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix \"<query>\"{RESET}           Answer technical question or suggest command")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel \"<query>\"{RESET}           Answer technical question or suggest command")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Configuration & Settings:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix lang [en|es]{RESET}        View or switch active language")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix model{RESET}                View active model and Ollama status")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix help{RESET}                 Display all available options")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel model [set <name>]{RESET}  View active model or change it (e.g. gemma2:2b)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel lang [en|es]{RESET}        View or switch active language")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel help{RESET}                 Display all available options")
         print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
     else:
-        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Todos los Comandos y Opciones Disponibles{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
+        print_tty(f"\n{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}Todos los Comandos y Opciones Disponibles{RESET} {CYAN}" + "─" * 15 + f"{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Comandos Interactivos:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix menu{RESET}                 Abre el menú interactivo con todas las opciones")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix{RESET}                      Chat interactivo (o repara si el comando previo falló)")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix chat{RESET}                 Abre canal de chat interactivo con memoria")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel menu{RESET}                 Abre el menú interactivo con todas las opciones")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel{RESET}                      Chat interactivo (o repara si el comando previo falló)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel chat{RESET}                 Abre canal de chat interactivo con memoria")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Código y Solución de Problemas:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix explain <archivo|cmd>{RESET} Explica arquitectura y funcionamiento de código")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix debug <error|archivo>{RESET} Analiza traza de error, causa raíz y solución")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix fix{RESET}                  Diagnostica y soluciona el último comando fallido")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel explain <archivo|cmd>{RESET} Explica arquitectura y funcionamiento de código")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel debug <error|archivo>{RESET} Analiza traza de error, causa raíz y solución")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel fix{RESET}                  Diagnostica y soluciona el último comando fallido")
         print_tty(f"{CYAN}│{RESET}   {GREEN}Ctrl + G{RESET}                   Atajo de teclado para analizar el último error")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Consultas en Lenguaje Natural:{RESET}")
         print_tty(f"{CYAN}│{RESET}   {GREEN}ask \"<consulta>\"{RESET}          Sugiere comando de terminal y permite ejecutarlo")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix \"<consulta>\"{RESET}        Responde preguntas técnicas o sugiere comandos")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel \"<consulta>\"{RESET}        Responde preguntas técnicas o sugiere comandos")
         print_tty(f"{CYAN}│{RESET}")
         print_tty(f"{CYAN}│{RESET} {BOLD}Configuración y Ajustes:{RESET}")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix lang [es|en]{RESET}        Ver o cambiar el idioma activo")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix model{RESET}                Ver modelo activo y estado de Ollama")
-        print_tty(f"{CYAN}│{RESET}   {GREEN}dilix help{RESET}                 Muestra todas las opciones disponibles")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel model [set <nombre>]{RESET} Ver o cambiar modelo activo (ej: gemma2:2b)")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel lang [es|en]{RESET}        Ver o cambiar el idioma activo")
+        print_tty(f"{CYAN}│{RESET}   {GREEN}nacel help{RESET}                 Muestra todas las opciones disponibles")
         print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}\n")
 
 def handle_menu():
@@ -940,7 +1040,7 @@ def handle_menu():
     while True:
         print_tty()
         if lang == "en":
-            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Interactive Control Center & Options{RESET} {CYAN}" + "─" * 17 + f"{RESET}")
+            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}Interactive Control Center & Options{RESET} {CYAN}" + "─" * 17 + f"{RESET}")
             print_tty(f"{CYAN}│{RESET} Choose an option to execute:")
             print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} 💬  Interactive Chat          (Start conversational channel)")
             print_tty(f"{CYAN}│{RESET}   {CYAN}[2]{RESET} 💡  Ask / Command Suggestion   (Generate exact terminal commands)")
@@ -954,9 +1054,9 @@ def handle_menu():
             print_tty(f"{CYAN}╰" + "─" * 65 + f"{RESET}")
             print_tty(f" {BOLD}Select an option [0-8]:{RESET} ", end="")
         else:
-            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Dilix{RESET} {CYAN}• {BOLD}Centro de Control y Opciones Disponibles{RESET} {CYAN}" + "─" * 12 + f"{RESET}")
+            print_tty(f"{CYAN}╭─ {BOLD}{MAGENTA}✨ Nacel{RESET} {CYAN}• {BOLD}Centro de Control y Opciones Disponibles{RESET} {CYAN}" + "─" * 12 + f"{RESET}")
             print_tty(f"{CYAN}│{RESET} Selecciona una opción para ejecutar:")
-            print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} 💬  Chat interactivo           (Conversar directamente con Dilix)")
+            print_tty(f"{CYAN}│{RESET}   {CYAN}[1]{RESET} 💬  Chat interactivo           (Conversar directamente con Nacel)")
             print_tty(f"{CYAN}│{RESET}   {CYAN}[2]{RESET} 💡  Consultar comando          (Generar comandos en lenguaje natural)")
             print_tty(f"{CYAN}│{RESET}   {CYAN}[3]{RESET} 🛠️  Diagnosticar último error  (Analizar y reparar último fallo)")
             print_tty(f"{CYAN}│{RESET}   {CYAN}[4]{RESET} 📖  Explicar código o archivo  (Analizar arquitectura y código)")
@@ -1013,7 +1113,7 @@ def handle_menu():
             handle_lang([])
             lang = ensure_language()
         elif choice == "7":
-            handle_status()
+            handle_model([])
             print_tty(f"\n{DIM}Presiona cualquier tecla para continuar... / Press any key to continue...{RESET}")
             read_key()
         elif choice == "8":
@@ -1039,7 +1139,7 @@ def main():
     elif command in ("help", "--help", "-h", "commands", "comandos"):
         handle_help()
     elif command in ("model", "models", "status", "info"):
-        handle_status()
+        handle_model(args)
     elif command in ("lang", "language", "idioma"):
         handle_lang(args)
     elif command in ("get-lang", "lang-code"):

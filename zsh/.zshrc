@@ -39,16 +39,20 @@ alias gpl="git pull"
 alias gl="git log --oneline --graph --decorate -n 10"
 
 # ==============================================================================
-# 3. ASISTENTE LOCAL DE IA: DILIX (PLUGIN MODULAR ZSH)
+# 3. ASISTENTE LOCAL DE IA: NACEL (PLUGIN MODULAR ZSH)
 # ==============================================================================
-export DILIX_MODEL="${DILIX_MODEL:-qwen2.5-coder:1.5b}"
-export DILIX_AUTO_MODE="${DILIX_AUTO_MODE:-ask}"
+export NACEL_MODEL="${NACEL_MODEL:-${DILIX_MODEL:-gemma2:2b}}"
+export NACEL_AUTO_MODE="${NACEL_AUTO_MODE:-${DILIX_AUTO_MODE:-ask}}"
 
-# Cargar plugin modular de Dilix (funciones, autocompletado _dilix, hooks y keybindings)
-DILIX_PLUGIN_PATH="$HOME/dotfiles/zsh/plugins/dilix"
-if [ -d "$DILIX_PLUGIN_PATH" ]; then
-  fpath=("$DILIX_PLUGIN_PATH" $fpath)
-  source "$DILIX_PLUGIN_PATH/dilix.plugin.zsh"
+# Cargar plugin modular de Nacel (funciones, autocompletado _nacel, hooks y keybindings)
+NACEL_PLUGIN_PATH="$HOME/dotfiles/zsh/plugins/nacel"
+if [ ! -d "$NACEL_PLUGIN_PATH" ] && [ -d "$HOME/nacel" ]; then
+  NACEL_PLUGIN_PATH="$HOME/nacel"
+fi
+
+if [ -d "$NACEL_PLUGIN_PATH" ]; then
+  fpath=("$NACEL_PLUGIN_PATH" $fpath)
+  source "$NACEL_PLUGIN_PATH/nacel.plugin.zsh"
 fi
 
 # Inicializar sistema de autocompletado de Zsh

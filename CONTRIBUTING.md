@@ -1,14 +1,14 @@
-# Contributing to Dotfiles & Dilix AI Suite
+# Contributing to Dotfiles & Nacel AI Suite
 
-Thank you for your interest in contributing to this project! We welcome contributions, bug reports, and suggestions to make this terminal setup and the Dilix AI suite even better.
+Thank you for your interest in contributing to this project! We welcome contributions, bug reports, and suggestions to make this terminal setup and the Nacel AI suite even better.
 
 ---
 
 ## 🧭 How You Can Help
 
-1. **Bug Reports & Fixes**: Found a problem in `install.sh`, Zsh aliases, or Dilix on your OS? Let us know or submit a PR.
+1. **Bug Reports & Fixes**: Found a problem in `install.sh`, Zsh aliases, or Nacel on your OS? Let us know or submit a PR.
 2. **Platform Support**: Improvements for macOS (Apple Silicon / Intel), CachyOS / Arch Linux, Ubuntu / Debian, or WSL2.
-3. **Features & Tools**: New modern CLI integrations, themes, Fastfetch presets, or Dilix capabilities.
+3. **Features & Tools**: New modern CLI integrations, themes, Fastfetch presets, or Nacel capabilities.
 4. **Documentation**: Improvements in English and Spanish translations or guide clarifications.
 
 ---
@@ -30,14 +30,14 @@ Before submitting changes to `install.sh`:
   ```
 - Always verify that the script does not break backwards compatibility across macOS, Arch/CachyOS, Ubuntu, and WSL2.
 
-### 3. Testing Dilix AI Plugin
+### 3. Testing Nacel AI Plugin
 - Test Python syntax:
   ```bash
-  python3 -m py_compile zsh/plugins/dilix/dilix.py
+  python3 -m py_compile zsh/plugins/nacel/nacel.py
   ```
 - Verify CLI command parsing:
   ```bash
-  python3 zsh/plugins/dilix/dilix.py --help
+  python3 zsh/plugins/nacel/nacel.py --help
   ```
 
 ---

@@ -1,6 +1,6 @@
-#compdef dilix
+#compdef nacel dilix
 
-_dilix() {
+_nacel() {
   local curcontext="$curcontext" state line
   typeset -A opt_args
 
@@ -13,7 +13,7 @@ _dilix() {
     'explain:Explica arquitectura y lógica de código / Explain code and architecture'
     'debug:Depura trazas de error y causa raíz / Debug error traces and root cause'
     'lang:Ver o cambiar idioma activo (es/en) / View or switch active language'
-    'model:Ver modelo de IA y estado del servicio Ollama / View AI model and Ollama status'
+    'model:Ver o cambiar modelo de IA y estado de Ollama / View or switch AI model and Ollama status'
     'help:Muestra la lista de todas las opciones / Show all available options'
   )
 
@@ -23,7 +23,7 @@ _dilix() {
 
   case "$state" in
     subcmd)
-      _describe -t subcommands 'subcomandos de dilix' subcommands
+      _describe -t subcommands 'subcomandos de nacel' subcommands
       ;;
     args)
       case "$line[1]" in
@@ -38,6 +38,14 @@ _dilix() {
           )
           _describe -t langs 'idioma' langs
           ;;
+        model)
+          local -a model_actions
+          model_actions=(
+            'set:Establecer un modelo (ej: gemma2:2b, qwen2.5-coder:7b)'
+            'status:Ver estado actual del modelo y Ollama'
+          )
+          _describe -t model_actions 'acción de modelo' model_actions
+          ;;
         *)
           _message 'consulta o argumento'
           ;;
@@ -46,4 +54,4 @@ _dilix() {
   esac
 }
 
-_dilix "$@"
+_nacel "$@"
