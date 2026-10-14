@@ -39,14 +39,21 @@ alias gpl="git pull"
 alias gl="git log --oneline --graph --decorate -n 10"
 
 # ==============================================================================
-# 3. ASISTENTE LOCAL DE IA: NACEL (CONSUMIDO DESDE EL PROYECTO NACEL)
+# 3. ASISTENTE LOCAL DE IA: NACEL (https://github.com/dannielnavas/nacel)
 # ==============================================================================
 export NACEL_MODEL="${NACEL_MODEL:-gemma2:2b}"
 export NACEL_AUTO_MODE="${NACEL_AUTO_MODE:-ask}"
 
-# Consumir plugin directamente del nuevo proyecto Nacel (~/nacel o ~/.nacel)
+# Consumir plugin de Nacel (prioridad: desarrollo local ~/nacel > ~/.nacel)
 NACEL_DIR="${NACEL_DIR:-$HOME/nacel}"
 if [ ! -d "$NACEL_DIR" ] && [ -d "$HOME/.nacel" ]; then
+  NACEL_DIR="$HOME/.nacel"
+fi
+
+# Autodescarga del plugin si no existe en la máquina
+if [ ! -d "$NACEL_DIR" ]; then
+  echo "📥 Instalando plugin Nacel AI desde https://github.com/dannielnavas/nacel..."
+  git clone --depth 1 https://github.com/dannielnavas/nacel.git "$HOME/.nacel" 2>/dev/null
   NACEL_DIR="$HOME/.nacel"
 fi
 

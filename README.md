@@ -10,7 +10,7 @@
 [![Terminal - WezTerm](https://img.shields.io/badge/WezTerm-GPU%20Accelerated-5856D6?style=flat-square&logo=wezterm&logoColor=white)](https://wezfurlong.org/wezterm/)
 [![Shell - Zsh](https://img.shields.io/badge/Shell-Zsh-F1502F?style=flat-square&logo=gnu-bash&logoColor=white)](https://www.zsh.org/)
 [![Prompt - Starship](https://img.shields.io/badge/Prompt-Starship-DD0B78?style=flat-square&logo=starship&logoColor=white)](https://starship.rs)
-[![AI - Nacel Local](https://img.shields.io/badge/AI%20Copilot-Nacel%20(Ollama)-8A2BE2?style=flat-square&logo=ollama&logoColor=white)](https://ollama.com)
+[![AI - Nacel Local](https://img.shields.io/badge/AI%20Copilot-Nacel%20(Ollama)-8A2BE2?style=flat-square&logo=ollama&logoColor=white)](https://github.com/dannielnavas/nacel)
 [![Theme - Tokyo Night](https://img.shields.io/badge/Theme-Tokyo%20Night-1a1b26?style=flat-square)](https://github.com/folke/tokyonight.nvim)
 [![Security - VirusTotal](https://img.shields.io/badge/VirusTotal-Clean%20(0%2F93)-0052FF?style=flat-square&logo=virustotal&logoColor=white)](https://www.virustotal.com/gui/url/09df21ef8168be8e4de057db3ce503148c2e0bb15795dc6c328ae2fbd38740b6)
 
@@ -58,7 +58,7 @@ Designed with out-of-the-box cross-platform support for **macOS**, **CachyOS / A
   - Custom status bar showing current workspace, git branches, system battery, and datetime.
   - Seamless WSL2 bridging on Windows environments.
 
-- 🤖 **Nacel AI Copilot**:
+- 🤖 **[Nacel AI Copilot](https://github.com/dannielnavas/nacel)**:
   - Fully local, offline-first AI assistant using Ollama (`gemma2:2b` by default, configurable).
   - `ask "<query>"`: Translates natural language queries into shell commands with interactive confirmation.
   - `fix` or `Ctrl + G`: Instant root-cause diagnosis and correction for the last failed command.
@@ -238,7 +238,7 @@ Diseñado con soporte nativo y automático para **macOS**, **CachyOS / Arch Linu
   - Barra de estado personalizada con espacio de trabajo actual, ramas de git, nivel de batería y reloj.
   - Enlace automático puente para Windows hacia entornos WSL2.
 
-- 🤖 **Copiloto Nacel AI**:
+- 🤖 **[Copiloto Nacel AI](https://github.com/dannielnavas/nacel)**:
   - Asistente de inteligencia artificial 100% local y privado mediante Ollama (`gemma2:2b` por defecto, configurable).
   - `ask "<consulta>"`: Traduce consultas en lenguaje cotidiano a comandos de shell con confirmación interactiva.
   - `fix` o `Ctrl + G`: Diagnóstico inmediato de causa raíz y reparación del último comando fallido.
