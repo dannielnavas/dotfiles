@@ -92,9 +92,7 @@ dotfiles/
 │   └── README.md         # VHS tape documentation
 ├── wezterm/              # GPU-accelerated terminal configuration (.wezterm.lua)
 ├── zsh/                  # Zsh shell configuration (.zshrc)
-│   └── plugins/
-│       └── nacel/        # Nacel AI core assistant engine, completions & Zsh plugin
-└── install.sh            # Automated bilingual installer script
+└── install.sh            # Automated bilingual installer script (integrates Nacel AI)
 ```
 
 ---
@@ -274,9 +272,7 @@ dotfiles/
 │   └── README.md         # Documentación de los tapes de VHS
 ├── wezterm/              # Configuración de terminal WezTerm (.wezterm.lua)
 ├── zsh/                  # Configuración de shell Zsh (.zshrc)
-│   └── plugins/
-│       └── nacel/        # Motor de Nacel AI, autocompletado y plugin de Zsh
-└── install.sh            # Script de instalación automatizada bilingüe
+└── install.sh            # Script de instalación automatizada bilingüe (integra Nacel AI)
 ```
 
 ---

@@ -39,20 +39,20 @@ alias gpl="git pull"
 alias gl="git log --oneline --graph --decorate -n 10"
 
 # ==============================================================================
-# 3. ASISTENTE LOCAL DE IA: NACEL (PLUGIN MODULAR ZSH)
+# 3. ASISTENTE LOCAL DE IA: NACEL (CONSUMIDO DESDE EL PROYECTO NACEL)
 # ==============================================================================
-export NACEL_MODEL="${NACEL_MODEL:-${DILIX_MODEL:-gemma2:2b}}"
-export NACEL_AUTO_MODE="${NACEL_AUTO_MODE:-${DILIX_AUTO_MODE:-ask}}"
+export NACEL_MODEL="${NACEL_MODEL:-gemma2:2b}"
+export NACEL_AUTO_MODE="${NACEL_AUTO_MODE:-ask}"
 
-# Cargar plugin modular de Nacel (funciones, autocompletado _nacel, hooks y keybindings)
-NACEL_PLUGIN_PATH="$HOME/dotfiles/zsh/plugins/nacel"
-if [ ! -d "$NACEL_PLUGIN_PATH" ] && [ -d "$HOME/nacel" ]; then
-  NACEL_PLUGIN_PATH="$HOME/nacel"
+# Consumir plugin directamente del nuevo proyecto Nacel (~/nacel o ~/.nacel)
+NACEL_DIR="${NACEL_DIR:-$HOME/nacel}"
+if [ ! -d "$NACEL_DIR" ] && [ -d "$HOME/.nacel" ]; then
+  NACEL_DIR="$HOME/.nacel"
 fi
 
-if [ -d "$NACEL_PLUGIN_PATH" ]; then
-  fpath=("$NACEL_PLUGIN_PATH" $fpath)
-  source "$NACEL_PLUGIN_PATH/nacel.plugin.zsh"
+if [ -d "$NACEL_DIR" ]; then
+  fpath=("$NACEL_DIR" $fpath)
+  source "$NACEL_DIR/nacel.plugin.zsh"
 fi
 
 # Inicializar sistema de autocompletado de Zsh

@@ -30,15 +30,9 @@ Before submitting changes to `install.sh`:
   ```
 - Always verify that the script does not break backwards compatibility across macOS, Arch/CachyOS, Ubuntu, and WSL2.
 
-### 3. Testing Nacel AI Plugin
-- Test Python syntax:
-  ```bash
-  python3 -m py_compile zsh/plugins/nacel/nacel.py
-  ```
-- Verify CLI command parsing:
-  ```bash
-  python3 zsh/plugins/nacel/nacel.py --help
-  ```
+### 3. Nacel AI Development
+- Nacel AI is maintained as an independent open-source project in its own repository: [github.com/dannielnavas/nacel](https://github.com/dannielnavas/nacel) (local path: `~/nacel`).
+- For contributions, bug reports, and features relating to Nacel AI, please submit them directly to the `nacel` repository.
 
 ---
 

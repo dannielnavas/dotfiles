@@ -376,14 +376,25 @@ echo "=========================================="
 echo_lang "  ✨ Configurando Sistema Nacel AI" "  ✨ Configuring Nacel AI System"
 echo "=========================================="
 
-# Permisos ejecutables para el script y plugin de Nacel
-NACEL_SCRIPT_PATH="$DOTFILES_DIR/zsh/plugins/nacel/nacel.py"
-chmod +x "$NACEL_SCRIPT_PATH"
+# Localizar o clonar el proyecto autónomo Nacel AI
+NACEL_DIR="$HOME/nacel"
+if [ ! -d "$NACEL_DIR" ] && [ -d "$HOME/.nacel" ]; then
+  NACEL_DIR="$HOME/.nacel"
+fi
 
-# Enlace directo en ~/.local/bin/nacel para ejecución global
-ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/nacel"
-ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/dilix"
-echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/nacel" "✅ Executable link created: $HOME/.local/bin/nacel"
+if [ ! -d "$NACEL_DIR" ]; then
+  echo_lang "📥 Clonando repositorio independiente Nacel AI en $HOME/.nacel..." "📥 Cloning standalone Nacel AI repository into $HOME/.nacel..."
+  git clone --depth 1 https://github.com/dannielnavas/nacel.git "$HOME/.nacel" 2>/dev/null || true
+  NACEL_DIR="$HOME/.nacel"
+fi
+
+NACEL_SCRIPT_PATH="$NACEL_DIR/nacel.py"
+if [ -f "$NACEL_SCRIPT_PATH" ]; then
+  chmod +x "$NACEL_SCRIPT_PATH"
+  ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/nacel"
+  ln -sf "$NACEL_SCRIPT_PATH" "$HOME/.local/bin/dilix"
+  echo_lang "✅ Enlace ejecutable creado: $HOME/.local/bin/nacel -> $NACEL_SCRIPT_PATH" "✅ Executable link created: $HOME/.local/bin/nacel -> $NACEL_SCRIPT_PATH"
+fi
 
 # Configuración persistente e idioma de Nacel
 mkdir -p "$NACEL_CONFIG_DIR"
