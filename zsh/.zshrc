@@ -41,7 +41,7 @@ alias gl="git log --oneline --graph --decorate -n 10"
 # ==============================================================================
 # 3. ASISTENTE LOCAL DE IA: NACEL (https://github.com/dannielnavas/nacel)
 # ==============================================================================
-export NACEL_MODEL="${NACEL_MODEL:-gemma2:2b}"
+# export NACEL_MODEL="" # Gestionado automáticamente en ~/.config/nacel/config.json
 export NACEL_AUTO_MODE="${NACEL_AUTO_MODE:-ask}"
 
 # Consumir plugin de Nacel (prioridad: desarrollo local ~/nacel > ~/.nacel)
