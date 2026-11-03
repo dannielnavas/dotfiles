@@ -28,7 +28,7 @@ config.line_height = 1.1
 config.harfbuzz_features = { 'calt=1', 'clig=1', 'liga=1' }
 
 -- Transparencia y desenfoque nativo de macOS
-config.window_background_opacity = 0.60
+config.window_background_opacity = 0.85
 config.macos_window_background_blur = 30
 config.window_padding = {
   left = 14,
@@ -53,6 +53,9 @@ config.enable_tab_bar = true
 config.use_fancy_tab_bar = false
 config.tab_max_width = 36
 config.hide_tab_bar_if_only_one_tab = false
+config.tab_bar_at_bottom = false -- pestañas estilo navegador, arriba
+config.show_new_tab_button_in_tab_bar = true
+config.show_close_tab_button_in_tabs = false
 
 config.default_cursor_style = 'BlinkingBar'
 config.cursor_blink_rate = 500
@@ -94,128 +97,102 @@ wezterm.on('gui-startup', function()
 end)
 
 ----------------------------------------------------
--- 5. PLUGINS
-----------------------------------------------------
--- Plugin: resurrect.wezterm
-local resurrect = wezterm.plugin.require('https://github.com/MLFlexer/resurrect.wezterm')
+-- 5. PESTAÑAS (arriba): qué se está ejecutando
+--    Diseño tipo pestaña de navegador:
+--    [ índice | icono del proceso | programa · carpeta ]
+--    ● amarillo = hay salida nueva en segundo plano
+------------------------------------------------
+local function get_cwd_basename(pane)
+  local cwd_uri = pane.current_working_dir
+  if not cwd_uri then
+    return ""
+  end
 
--- Plugin: bar.wezterm (Barra inferior de estado)
-local bar = wezterm.plugin.require('https://github.com/adriankarlen/bar.wezterm')
-bar.apply_to_config(config, {
-  position = 'bottom',
-  max_width = 36,
-  modules = {
-    tabs = {
-      active_tab_fg = 4,
-      inactive_tab_fg = 6,
-    },
-    workspace = { enabled = true },
-    leader = { enabled = true },
-    cwd = { enabled = true },
-    hostname = { enabled = true, color = 8 },
-    username = { enabled = true, color = 6 },
-    spotify = { enabled = false, color = 2 },
-    clock = { enabled = true, format = '%H:%M' },
-  },
-})
+  local path = ""
+  if type(cwd_uri) == "userdata" or type(cwd_uri) == "table" then
+    path = cwd_uri.file_path or ""
+  elseif type(cwd_uri) == "string" then
+    path = cwd_uri:gsub("^file://[^/]*", "")
+  end
+  path = path:gsub("/+$", "")
 
-----------------------------------------------------
--- 6. PRESENTACIÓN MEJORADA DE PESTAÑAS (Pill Style)
-----------------------------------------------------
+  local home = os.getenv("HOME") or ""
+  if home ~= "" and path == home then
+    return "~"
+  end
+  return path:match("([^/]+)$") or path
+end
+
 local function get_process_info(tab)
   local pane = tab.active_pane
   local process_name = pane.foreground_process_name or ""
   local name = process_name:gsub("(.*[/\\])(.*)", "%2"):lower()
+  local cwd = get_cwd_basename(pane)
+  local cwd_suffix = (cwd ~= "") and (" · " .. cwd) or ""
 
-  -- Extraer la carpeta de trabajo actual (CWD)
-  local cwd = ""
-  local cwd_uri = pane.current_working_dir
-  if cwd_uri then
-    local path = ""
-    if type(cwd_uri) == "userdata" or type(cwd_uri) == "table" then
-      path = cwd_uri.file_path or ""
-    elseif type(cwd_uri) == "string" then
-      path = cwd_uri:gsub("^file://[^/]*", "")
-    end
-
-    local home = os.getenv("HOME") or ""
-    if home ~= "" and path == home then
-      cwd = "~"
-    elseif path ~= "" then
-      cwd = path:match("([^/]+)$") or path
-    end
-  end
-
-  -- Si el usuario renombró la pestaña manualmente
+  -- Si el usuario renombró la pestaña manualmente, se respeta su nombre
   if tab.tab_title and #tab.tab_title > 0 then
     return nf.cod_terminal, tab.tab_title
   end
 
   local icon = nf.cod_terminal
-  local title = "shell"
+  local title = (name ~= "" and name or "shell") .. cwd_suffix
 
   if name:find("nvim") or name:find("vim") then
     icon = nf.custom_neovim
-    title = (cwd ~= "" and cwd ~= "~") and ("nvim: " .. cwd) or "neovim"
-  elseif name:find("git") or name:find("lazygit") then
+    title = ((cwd ~= "" and cwd ~= "~") and ("nvim · " .. cwd) or "neovim")
+  elseif name:find("lazygit") then
     icon = nf.dev_git
-    title = (name:find("lazygit")) and "lazygit" or "git"
-    if cwd ~= "" and cwd ~= "~" then
-      title = title .. " (" .. cwd .. ")"
-    end
+    title = "lazygit" .. cwd_suffix
+  elseif name:find("git") then
+    icon = nf.dev_git
+    title = "git" .. cwd_suffix
   elseif name:find("node") or name:find("npm") or name:find("pnpm") or name:find("yarn") or name:find("bun") then
     icon = nf.dev_nodejs_small
-    title = name
-    if cwd ~= "" and cwd ~= "~" then
-      title = title .. " (" .. cwd .. ")"
-    end
-  elseif name:find("python") or name:find("py") then
+    title = name .. cwd_suffix
+  elseif name:find("python") or name:find("^py") then
     icon = nf.dev_python
-    title = "python"
-    if cwd ~= "" and cwd ~= "~" then
-      title = title .. " (" .. cwd .. ")"
-    end
+    title = "python" .. cwd_suffix
   elseif name:find("cargo") or name:find("rust") then
     icon = nf.dev_rust
-    title = "cargo"
-    if cwd ~= "" and cwd ~= "~" then
-      title = title .. " (" .. cwd .. ")"
-    end
+    title = "cargo" .. cwd_suffix
   elseif name:find("docker") then
     icon = nf.linux_docker
-    title = "docker"
+    title = "docker" .. cwd_suffix
   elseif name:find("ssh") then
     icon = nf.md_remote_desktop
-    title = "ssh"
+    title = "ssh" .. cwd_suffix
   elseif name:find("htop") or name:find("btop") or name:find("top") then
     icon = nf.md_chart_bell_curve
     title = name
-  elseif name:find("zsh") or name:find("bash") or name:find("sh") or name:find("fish") or name == "" then
+  elseif name:find("zsh") or name:find("bash") or name:find("fish") or name == "" then
     icon = nf.cod_terminal
-    title = cwd ~= "" and cwd or "terminal"
-  else
-    icon = nf.cod_terminal
-    title = name
-    if cwd ~= "" and cwd ~= "~" then
-      title = title .. " (" .. cwd .. ")"
-    end
+    title = (name ~= "" and name or "shell") .. cwd_suffix
   end
 
-  -- Indicador de paneles divididos (Splits) y Zoom
-  local badges = ""
+  -- Insignia de paneles divididos (splits) y zoom
   if #tab.panes > 1 then
-    badges = badges .. " " .. nf.cod_multiple_windows .. #tab.panes
+    title = title .. "  " .. nf.cod_multiple_windows .. #tab.panes
   end
   if pane.is_zoomed then
-    badges = badges .. " " .. nf.md_fullscreen
+    title = title .. "  " .. nf.md_fullscreen
   end
 
-  return icon, title .. badges
+  return icon, title
 end
 
+-- NOTA: este handler debe registrarse ANTES que cualquier plugin
+-- (el plugin bar.wezterm también registra "format-tab-title" y solo
+-- se ejecuta el primero que se registró).
 wezterm.on("format-tab-title", function(tab, tabs, panes, conf, hover, max_width)
   local icon, title = get_process_info(tab)
   local index = tostring(tab.tab_index + 1)
+  local intensity = tab.is_active and "Bold" or "Normal"
+
+  -- ● amarillo = salida nueva sin leer en una pestaña en segundo plano
+  local unseen = (not tab.is_active)
+    and tab.active_pane ~= nil
+    and tab.active_pane.has_unseen_output == true
 
   local bar_bg = "transparent"
   local pill_bg, pill_fg, icon_fg, num_fg
@@ -240,20 +217,21 @@ wezterm.on("format-tab-title", function(tab, tabs, panes, conf, hover, max_width
     num_fg = "#565f89"
   end
 
-  -- Truncar si el título excede el ancho máximo
-  local max_len = conf.tab_max_width or 32
-  if #title > max_len - 8 then
-    title = wezterm.truncate_right(title, max_len - 11) .. "…"
+  -- Recorta el título al espacio real disponible (en columnas, no en bytes)
+  local max_cells = (max_width and max_width > 0 and max_width) or conf.tab_max_width or 36
+  local budget = math.max(max_cells - 7 - wezterm.column_width(icon) - (unseen and 2 or 0), 6)
+  if wezterm.column_width(title) > budget then
+    title = wezterm.truncate_right(title, math.max(budget - 1, 1)) .. "…"
   end
 
-  return {
+  local cells = {
     { Background = { Color = bar_bg } },
     { Foreground = { Color = pill_bg } },
     { Text = nf.ple_left_half_circle_thick },
 
     { Background = { Color = pill_bg } },
     { Foreground = { Color = num_fg } },
-    { Attribute = { Intensity = tab.is_active and "Bold" or "Normal" } },
+    { Attribute = { Intensity = intensity } },
     { Text = " " .. index .. " " },
 
     { Background = { Color = pill_bg } },
@@ -262,17 +240,55 @@ wezterm.on("format-tab-title", function(tab, tabs, panes, conf, hover, max_width
 
     { Background = { Color = pill_bg } },
     { Foreground = { Color = pill_fg } },
-    { Attribute = { Intensity = tab.is_active and "Bold" or "Normal" } },
-    { Text = title .. " " },
-
-    { Background = { Color = bar_bg } },
-    { Foreground = { Color = pill_bg } },
-    { Text = nf.ple_right_half_circle_thick },
-
-    { Background = { Color = bar_bg } },
-    { Text = " " },
+    { Attribute = { Intensity = intensity } },
+    { Text = title },
   }
+
+  if unseen then
+    table.insert(cells, { Background = { Color = pill_bg } })
+    table.insert(cells, { Foreground = { Color = "#e0af68" } })
+    table.insert(cells, { Text = " ●" })
+  end
+
+  table.insert(cells, { Background = { Color = pill_bg } })
+  table.insert(cells, { Text = " " })
+  table.insert(cells, { Background = { Color = bar_bg } })
+  table.insert(cells, { Foreground = { Color = pill_bg } })
+  table.insert(cells, { Text = nf.ple_right_half_circle_thick })
+  table.insert(cells, { Background = { Color = bar_bg } })
+  table.insert(cells, { Text = " " })
+
+  return cells
 end)
+
+------------------------------------------------
+-- 6. PLUGINS
+----------------------------------------------------
+-- Plugin: resurrect.wezterm
+local resurrect = wezterm.plugin.require('https://github.com/MLFlexer/resurrect.wezterm')
+
+-- Plugin: bar.wezterm (Barra de estado; las pestañas van arriba)
+local bar = wezterm.plugin.require('https://github.com/adriankarlen/bar.wezterm')
+bar.apply_to_config(config, {
+  position = 'top',
+  max_width = 36,
+  modules = {
+    tabs = {
+      active_tab_fg = '#15161e',
+      inactive_tab_fg = '#9aa5ce',
+      new_tab_fg = '#7aa2f7',
+    },
+    workspace = { enabled = true, color = '#7aa2f7' },
+    leader = { enabled = true, color = '#e0af68' },
+    -- El proceso activo ya se muestra en cada pestaña; evita duplicarlo aquí
+    pane = { enabled = false },
+    cwd = { enabled = true, color = '#7dcfff' },
+    hostname = { enabled = true, color = '#a9b1d6' },
+    username = { enabled = true, color = '#bb9af7' },
+    spotify = { enabled = false, color = 2 },
+    clock = { enabled = true, format = '%H:%M', color = '#e0af68' },
+  },
+})
 
 ----------------------------------------------------
 -- 7. ATAJOS DE TECLADO (Unificados)
@@ -309,6 +325,21 @@ config.keys = {
   { key = 't', mods = 'CMD', action = act.SpawnTab 'CurrentPaneDomain' },
   { key = 'LeftArrow', mods = 'CMD|ALT', action = act.ActivateTabRelative(-1) },
   { key = 'RightArrow', mods = 'CMD|ALT', action = act.ActivateTabRelative(1) },
+  { key = 'w', mods = 'LEADER', action = act.ShowTabNavigator },
+  { key = '<', mods = 'LEADER|SHIFT', action = act.MoveTabRelative(-1) },
+  { key = '>', mods = 'LEADER|SHIFT', action = act.MoveTabRelative(1) },
+  {
+    key = ',',
+    mods = 'LEADER',
+    action = act.PromptInputLine {
+      description = 'Renombrar pestaña (vacío = volver al automático):',
+      action = wezterm.action_callback(function(window, _, line)
+        if line ~= nil then
+          window:mux_window():active_tab():set_title(line)
+        end
+      end),
+    },
+  },
 
   -- === Workspaces ===
   { key = 's', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' } },
@@ -329,6 +360,8 @@ config.keys = {
   { key = 'f', mods = 'CMD', action = act.Search { CaseSensitiveString = '' } },
   { key = 'Space', mods = 'LEADER', action = act.QuickSelect },
   { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },
+  { key = 'y', mods = 'LEADER', action = act.SendString '\x1by' },
+  { key = 'Y', mods = 'LEADER|SHIFT', action = act.SendString 'cpout\n' },
   { key = 'k', mods = 'CMD', action = act.ClearScrollback 'ScrollbackAndViewport' },
 
   -- === Zoom de fuente ===

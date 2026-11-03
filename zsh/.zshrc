@@ -39,6 +39,122 @@ alias gpl="git pull"
 alias gl="git log --oneline --graph --decorate -n 10"
 
 # ==============================================================================
+# 2.1 PORTAPAPELES Y COPIA DE COMANDOS / RESULTADOS (ÉXITO Y ERROR)
+# ==============================================================================
+# Función multiplataforma para copiar texto al portapapeles (macOS, Linux, WSL2, OSC52)
+_clipboard_copy() {
+  local input
+  if [[ $# -gt 0 ]]; then
+    input="$*"
+  else
+    input="$(cat)"
+  fi
+
+  if command -v pbcopy &>/dev/null; then
+    printf "%s" "$input" | pbcopy
+  elif command -v clip.exe &>/dev/null; then
+    printf "%s" "$input" | clip.exe
+  elif command -v wl-copy &>/dev/null; then
+    printf "%s" "$input" | wl-copy
+  elif command -v xclip &>/dev/null; then
+    printf "%s" "$input" | xclip -selection clipboard
+  elif command -v xsel &>/dev/null; then
+    printf "%s" "$input" | xsel --clipboard --input
+  else
+    # Fallback OSC 52 (soportado nativamente por WezTerm)
+    local b64
+    b64=$(printf "%s" "$input" | base64 | tr -d '\r\n')
+    printf "\033]52;c;%s\a" "$b64"
+  fi
+}
+
+# Registro automático del último comando ejecutado y su código de salida
+autoload -Uz add-zsh-hook
+
+__dotfiles_track_preexec() {
+  if [[ "$1" != cpcmd* && "$1" != copylast* && "$1" != cpout* && "$1" != copyout* ]]; then
+    export __DOTFILES_LAST_CMD="$1"
+    export __DOTFILES_CMD_RAN=1
+  fi
+}
+
+__dotfiles_track_precmd() {
+  local exit_code=$?
+  if [[ -n "$__DOTFILES_CMD_RAN" ]]; then
+    export __DOTFILES_LAST_CODE=$exit_code
+    export __DOTFILES_CMD_RAN=""
+  fi
+}
+
+add-zsh-hook preexec __dotfiles_track_preexec
+add-zsh-hook precmd __dotfiles_track_precmd
+
+# Copia el último comando ejecutado o generado (tanto si fue exitoso como si dio error)
+cpcmd() {
+  local target_cmd="${__DOTFILES_LAST_CMD:-$(fc -ln -1 2>/dev/null | sed 's/^[[:space:]]*//')}"
+  local last_code="${__DOTFILES_LAST_CODE:-0}"
+
+  if [[ -z "$target_cmd" ]]; then
+    echo -e "\033[1;33m⚠️  No hay comando reciente para copiar.\033[0m"
+    return 1
+  fi
+
+  _clipboard_copy "$target_cmd"
+  if [[ "$last_code" -eq 0 ]]; then
+    echo -e "\033[1;32m📋 Comando copiado (✔ exitoso):\033[0m $target_cmd"
+  else
+    echo -e "\033[1;31m📋 Comando copiado (✖ error $last_code):\033[0m $target_cmd"
+  fi
+}
+alias copylast="cpcmd"
+
+# Ejecuta un comando (o el último comando) y copia su salida tanto exitosa (stdout) como de error (stderr)
+cpout() {
+  local target_cmd
+  if [[ $# -gt 0 ]]; then
+    target_cmd="$*"
+  else
+    target_cmd="${__DOTFILES_LAST_CMD:-$(fc -ln -1 2>/dev/null | sed 's/^[[:space:]]*//')}"
+  fi
+
+  if [[ -z "$target_cmd" ]]; then
+    echo -e "\033[1;33m⚠️  No hay comando para ejecutar y copiar su resultado.\033[0m"
+    return 1
+  fi
+
+  local tmp_out
+  tmp_out="$(mktemp -t zsh_cpout.XXXXXX)"
+  eval "$target_cmd" > >(tee "$tmp_out") 2> >(tee -a "$tmp_out" >&2)
+  local cmd_status=$?
+
+  _clipboard_copy < "$tmp_out"
+  rm -f "$tmp_out"
+
+  export __DOTFILES_LAST_CMD="$target_cmd"
+  export __DOTFILES_LAST_CODE=$cmd_status
+
+  if [[ $cmd_status -eq 0 ]]; then
+    echo -e "\033[1;32m📋 Resultado copiado al portapapeles (✔ exitoso)\033[0m"
+  else
+    echo -e "\033[1;31m📋 Resultado de error copiado al portapapeles (✖ código $cmd_status)\033[0m"
+  fi
+
+  return $cmd_status
+}
+alias copyout="cpout"
+
+# Atajo de teclado interactivo (Alt+Y / Ctrl+Y) para copiar el último comando al instante
+if [[ -o interactive ]]; then
+  __dotfiles_copy_cmd_widget() {
+    zle -I
+    cpcmd
+    zle reset-prompt
+  }
+  zle -N __dotfiles_copy_cmd_widget
+  bindkey '^[y' __dotfiles_copy_cmd_widget
+fi
+
+# ==============================================================================
 # 3. ASISTENTE LOCAL DE IA: NACEL (https://github.com/dannielnavas/nacel)
 # ==============================================================================
 # export NACEL_MODEL="" # Gestionado automáticamente en ~/.config/nacel/config.json
@@ -60,6 +176,40 @@ fi
 if [ -d "$NACEL_DIR" ]; then
   fpath=("$NACEL_DIR" $fpath)
   source "$NACEL_DIR/nacel.plugin.zsh"
+
+  # Integrar copia de comandos resultantes de Nacel (tanto en consultas como en errores/fix)
+  __nacel_run_action() {
+    local action_type="$1"
+    local cmd="$2"
+
+    if [[ -n "$cmd" ]]; then
+      export __DOTFILES_LAST_CMD="$cmd"
+    fi
+
+    case "$action_type" in
+      EXEC)
+        if [[ -n "$cmd" ]]; then
+          print -s "$cmd"
+          echo -e "\033[1;32m▶ Running / Ejecutando:\033[0m $cmd"
+          eval "$cmd"
+          export __DOTFILES_LAST_CODE=$?
+        fi
+        ;;
+      MODIFY)
+        if [[ -n "$cmd" ]]; then
+          print -z "$cmd"
+        fi
+        ;;
+      COPY)
+        if [[ -n "$cmd" ]]; then
+          _clipboard_copy "$cmd"
+          echo -e "\033[1;32m📋 Copied / Copiado:\033[0m $cmd"
+        fi
+        ;;
+      CANCEL|*)
+        ;;
+    esac
+  }
 fi
 
 # Inicializar sistema de autocompletado de Zsh
@@ -237,3 +387,11 @@ alias ff-pokemon="fastfetch -c config-macos-pokemon.jsonc"
 if command -v fastfetch &>/dev/null && [[ -o interactive ]] && [[ -t 1 ]]; then
   fastfetch
 fi
+
+# pnpm
+export PNPM_HOME="/Users/dannielnavas/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end

@@ -53,10 +53,11 @@ Designed with out-of-the-box cross-platform support for **macOS**, **CachyOS / A
 ### ✨ Features
 
 - 🖥️ **WezTerm (GPU Accelerated)**:
-  - **Tokyo Night** color scheme with native macOS acrylic blur and 60% window opacity.
+  - **Tokyo Night** color scheme with native macOS acrylic blur and 85% window opacity.
   - **Victor Mono** & **JetBrainsMono Nerd Font** typography with code ligatures (`calt`, `clig`, `liga`).
   - WebGPU rendering engine targeting up to 120 FPS.
-  - Custom status bar showing current workspace, git branches, system battery, and datetime.
+  - Status bar with current workspace, user@host, cwd and clock (`Ctrl`+`A` arms leader mode).
+  - Browser-style tab bar at the top: each tab shows the icon of the process running inside it plus the folder, a yellow dot flags unread output, and `Ctrl`+`A`, `W` opens a fuzzy tab navigator.
   - Seamless WSL2 bridging on Windows environments.
 
 - 🤖 **[Nacel AI Copilot](https://github.com/dannielnavas/nacel)**:
@@ -162,6 +163,9 @@ You can specify the language and target operating system directly using flags:
 | Close Pane              | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>W</kbd>                                              |
 | Navigate Panes          | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd> |
 | New Tab                 | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>T</kbd>                                              |
+| Rename Current Tab      | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>,</kbd>                                               |
+| Move Tab Left / Right   | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>&lt;</kbd> / <kbd>&gt;</kbd>                          |
+| Fuzzy Tab Navigator     | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>W</kbd>                                               |
 | Toggle Fullscreen       | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>Enter</kbd>                                          |
 | Quick Search Mode       | <kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd>                          |
 
@@ -174,9 +178,11 @@ You can specify the language and target operating system directly using flags:
 | `lt` / `tree`                  | `eza`    | Two-level recursive tree view                              |
 | `cat <file>`                   | `bat`    | View file with syntax highlighting (no paging)             |
 | `preview <file>`               | `bat`    | View file with line numbers and git diff marks             |
-| `z <dir>`                      | `zoxide` | Fast jump to frequently or recently visited directory      |
-| <kbd>Ctrl</kbd> + <kbd>R</kbd> | `atuin`  | Interactive history search with SQLite backend             |
-| `reload`                       | `zsh`    | Reloads Zsh configuration (`exec zsh`)                     |
+| `z <dir>`                      | `zoxide`    | Fast jump to frequently or recently visited directory                     |
+| <kbd>Ctrl</kbd> + <kbd>R</kbd> | `atuin`     | Interactive history search with SQLite backend                            |
+| `cpcmd` / <kbd>Alt</kbd>+<kbd>Y</kbd> | `zsh` | Copies the last command (successful or failed) to the clipboard           |
+| `cpout [cmd]`                  | `zsh`       | Runs a command (or last command) and copies `stdout` + `stderr` output    |
+| `reload`                       | `zsh`       | Reloads Zsh configuration (`exec zsh`)                                    |
 
 ---
 
@@ -234,10 +240,11 @@ Diseñado con soporte nativo y automático para **macOS**, **CachyOS / Arch Linu
 ### ✨ Características Principales
 
 - 🖥️ **WezTerm (Acelerado por GPU)**:
-  - Paleta de color **Tokyo Night** con desenfoque acrílico nativo en macOS y 60% de opacidad.
+  - Paleta de color **Tokyo Night** con desenfoque acrílico nativo en macOS y 85% de opacidad.
   - Tipografía **Victor Mono** y **JetBrainsMono Nerd Font** con ligaduras de código (`calt`, `clig`, `liga`).
   - Motor de renderizado WebGPU a 120 FPS fluidos.
-  - Barra de estado personalizada con espacio de trabajo actual, ramas de git, nivel de batería y reloj.
+  - Barra de estado con espacio de trabajo, usuario@host, cwd y reloj (`Ctrl`+`A` activa el modo leader).
+  - Barra de pestañas estilo navegador en la parte superior: cada pestaña muestra el icono del proceso que se está ejecutando y la carpeta, un punto amarillo indica salida sin leer, y `Ctrl`+`A`, `W` abre un buscador difuso de pestañas.
   - Enlace automático puente para Windows hacia entornos WSL2.
 
 - 🤖 **[Copiloto Nacel AI](https://github.com/dannielnavas/nacel)**:
@@ -343,6 +350,9 @@ Puedes omitir los menús interactivos indicando el idioma y el sistema operativo
 | Cerrar panel actual              | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>W</kbd>                                              |
 | Cambiar de panel                 | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd> |
 | Nueva pestaña                    | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>T</kbd>                                              |
+| Renombrar pestaña actual         | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>,</kbd>                                               |
+| Mover pestaña izq. / der.        | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>&lt;</kbd> / <kbd>&gt;</kbd>                          |
+| Buscador difuso de pestañas      | <kbd>Ctrl</kbd> + <kbd>A</kbd>, <kbd>W</kbd>                                               |
 | Pantalla completa                | <kbd>Cmd</kbd> / <kbd>Alt</kbd> + <kbd>Enter</kbd>                                          |
 | Búsqueda interactiva en el búfer | <kbd>Cmd</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd>                          |
 
@@ -355,9 +365,11 @@ Puedes omitir los menús interactivos indicando el idioma y el sistema operativo
 | `lt` / `tree`                  | `eza`       | Vista de árbol jerárquico a dos niveles de profundidad    |
 | `cat <archivo>`                | `bat`       | Visualiza archivo con sintaxis resaltada y sin paginado   |
 | `preview <archivo>`            | `bat`       | Vista detallada con números de línea y modificaciones git |
-| `z <directorio>`               | `zoxide`    | Salto rápido a carpetas frecuentes o recientes            |
-| <kbd>Ctrl</kbd> + <kbd>R</kbd> | `atuin`     | Búsqueda interactiva en el historial de comandos          |
-| `reload`                       | `zsh`       | Recarga la configuración del shell al vuelo (`exec zsh`)  |
+| `z <directorio>`                      | `zoxide`    | Salto rápido a carpetas frecuentes o recientes                            |
+| <kbd>Ctrl</kbd> + <kbd>R</kbd>        | `atuin`     | Búsqueda interactiva en el historial de comandos                          |
+| `cpcmd` / <kbd>Alt</kbd>+<kbd>Y</kbd> | `zsh`       | Copia el último comando (exitoso o con error) al portapapeles             |
+| `cpout [cmd]`                         | `zsh`       | Ejecuta un comando (o el último) y copia su salida (`stdout` y `stderr`)  |
+| `reload`                              | `zsh`       | Recarga la configuración del shell al vuelo (`exec zsh`)                  |
 
 ---
 
