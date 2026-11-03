@@ -29,6 +29,6 @@ Please provide a summary of the changes made and the motivation behind them.
 
 - [ ] My code adheres to the project's style conventions.
 - [ ] I have tested that `install.sh` syntax is valid (`bash -n install.sh`).
-- [ ] If changing Python code (`dilix.py`), it compiles without syntax errors.
+- [ ] I have tested that any scripts I changed are syntactically valid (e.g. `bash -n`).
 - [ ] I have updated relevant documentation in English and/or Spanish if needed.
 - [ ] No private keys, passwords, or personal credentials are included.

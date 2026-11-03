@@ -16,11 +16,6 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
       - name: 🐚 Validate Shell Scripts
         run: |
           echo "Checking syntax of installer script..."
@@ -28,11 +23,6 @@ jobs:
           if [ -f "tapes/render_all.sh" ]; then
             bash -n tapes/render_all.sh
           fi
-
-      - name: 🤖 Validate Dilix AI Python Engine
-        run: |
-          echo "Compiling Dilix Python engine..."
-          python3 -m py_compile zsh/plugins/dilix/dilix.py
 
       - name: 📦 Validate Fastfetch JSON Configs
         run: |
