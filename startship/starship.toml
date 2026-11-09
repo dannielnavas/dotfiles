@@ -1,147 +1,118 @@
-# ==============================================================================
-# 1. CONFIGURACIÓN GENERAL Y FORMATO
-# ==============================================================================
+# Estilo Warp: prompt minimo en 2 lineas.
+# Linea 1: carpeta + git (+ runtime solo si el proyecto lo necesita)
+# Linea 2: ❯ limpia. Sin fill, sin AWS/Docker/Jobs, sin status bar.
+
 format = """
 $directory\
 $git_branch\
 $git_status\
-$fill\
 $python\
-$lua\
 $nodejs\
-$golang\
-$haskell\
 $rust\
-$ruby\
-$aws\
-$docker_context\
-$jobs\
+$golang\
 $cmd_duration\
 $line_break\
 $character"""
 
 add_newline = true
-palette = "nord"
+palette = "warp"
 
-# ==============================================================================
-# 2. DIRECTORIO Y RUTAS
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Directorio: claro y neutral (Warp usa blanco/gris, no azul del Nord)
+# ---------------------------------------------------------------------------
 [directory]
-style = 'bold fg:dark_blue'
-format = '[$path ]($style)'
-truncation_length = 3
+style = 'bold fg:text'
+format = '[$path]($style) '
+truncation_length = 4
 truncation_symbol = '…/'
-truncate_to_repo = false
+truncate_to_repo = true
 
-[directory.substitutions]
-'Documents' = '󰈙'
-'Downloads' = ' '
-'Music' = ' '
-'Pictures' = ' '
-
-# ==============================================================================
-# 3. CONTROL DE VERSIONES (GIT)
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Git: rama en gris acento, sin "on", sin icono
+# ---------------------------------------------------------------------------
 [git_branch]
-style = 'fg:green'
-symbol = ' '
-format = '[on](white) [$symbol$branch ]($style)'
+style = 'fg:muted'
+symbol = ''
+format = '[($branch )]($style)'
 
 [git_status]
-style = 'fg:red'
-format = '([$all_status$ahead_behind]($style) )'
+style = 'fg:muted'
+format = '[$modified$staged$ahead_behind]($style) '
+modified = '*'
+staged = '+'
+untracked = ''
+ahead = ' ↑$count'
+behind = ' ↓$count'
+diverged = ' ⇅ $ahead_behind_count'
 
-# ==============================================================================
-# 4. ESPACIADOR (FILL)
-# ==============================================================================
-[fill]
-symbol = ' '
-
-# ==============================================================================
-# 5. LENGUAJES Y RUNTIMES
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Runtimes: solo si el proyecto los requiere (Starship ya detecta por archivos)
+# ---------------------------------------------------------------------------
 [python]
-style = 'teal'
-symbol = ' '
-format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
-pyenv_version_name = true
-pyenv_prefix = ''
-
-[lua]
-format = '[$symbol($version )]($style)'
-symbol = ' '
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
+pyenv_version_name = false
 
 [nodejs]
-style = 'blue'
-symbol = ' '
-
-[golang]
-style = 'blue'
-symbol = ' '
-
-[haskell]
-style = 'blue'
-symbol = ' '
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
 
 [rust]
-style = 'orange'
-symbol = ' '
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
+
+[golang]
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
+
+[lua]
+format = '[$version ]($style)'
+symbol = ''
+
+[haskell]
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
 
 [ruby]
-style = 'blue'
-symbol = ' '
+style = 'fg:muted'
+symbol = ''
+format = '[$version ]($style)'
 
-[package]
-symbol = '󰏗 '
-
-# ==============================================================================
-# 6. SERVICIOS Y CONTENEDORES (AWS, DOCKER)
-# ==============================================================================
+# Desactivados en Warp: ruido constante aunque poco usado
 [aws]
-symbol = ' '
-style = 'yellow'
-format = '[$symbol($profile )(\[$duration\] )]($style)'
+disabled = true
 
 [docker_context]
-symbol = ' '
-style = 'fg:#06969A'
-format = '[$symbol$context]($style) '
-detect_files = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
-detect_extensions = ['Dockerfile']
+disabled = true
 
-# ==============================================================================
-# 7. SISTEMA Y PROCESOS
-# ==============================================================================
 [jobs]
-symbol = ' '
-style = 'red'
-number_threshold = 1
-format = '[$symbol]($style)'
+disabled = true
 
+# ---------------------------------------------------------------------------
+# Duracion: solo comandos largos (>2s), en gris tenue
+# ---------------------------------------------------------------------------
 [cmd_duration]
-min_time = 500
-style = 'fg:gray'
-format = '[$duration]($style)'
+min_time = 2000
+style = 'fg:muted'
+format = '[$duration ]($style)'
 
-# ==============================================================================
-# 8. INDICADOR DE PROMPT (CHARACTER)
-# ==============================================================================
+# ---------------------------------------------------------------------------
+# Indicador: ❯ estilo Warp (acento brillante / rojo en error)
+# ---------------------------------------------------------------------------
 [character]
-success_symbol = '[❯](bold green)'
-error_symbol = '[❯](bold red)'
+success_symbol = '[❯](bold fg:accent) '
+error_symbol = '[❯](bold fg:red) '
 
-# ==============================================================================
-# 9. PALETA DE COLORES (NORD THEME)
-# ==============================================================================
-[palettes.nord]
-dark_blue = '#5E81AC'
-blue = '#81A1C1'
-teal = '#88C0D0'
-red = '#BF616A'
-orange = '#D08770'
-green = '#A3BE8C'
-yellow = '#EBCB8B'
-purple = '#B48EAD'
-gray = '#434C5E'
-black = '#2E3440'
-white = '#E7E7E7'
+# ---------------------------------------------------------------------------
+# Paleta suave estilo Warp (Tokyo Night, sin Nord saturado)
+# ---------------------------------------------------------------------------
+[palettes.warp]
+text = '#c0caf5'
+muted = '#565f89'
+accent = '#7aa2f7'
+red = '#f7768e'

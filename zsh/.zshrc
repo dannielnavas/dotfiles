@@ -383,10 +383,7 @@ alias ff-logo="fastfetch -c config-macos-logo.jsonc"
 alias ff-animal="fastfetch -c config-macos-animal.jsonc"
 alias ff-pokemon="fastfetch -c config-macos-pokemon.jsonc"
 
-# Ejecutar banner Fastfetch en sesiones de terminal interactivas
-if command -v fastfetch &>/dev/null && [[ -o interactive ]] && [[ -t 1 ]]; then
-  fastfetch
-fi
+# Estilo Warp: sin banner al abrir (arranque limpio). Usar manualmente: ff
 
 # pnpm
 export PNPM_HOME="/Users/dannielnavas/Library/pnpm"
